@@ -20,7 +20,6 @@ namespace Behaviors
 
         private void OnTriggerExit(Collider other)
         {
-            Debug.Log("Player exited the segment.");
             _segmentUpdateChannel.RaiseEvent();
         }
     }
