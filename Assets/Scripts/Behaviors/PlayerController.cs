@@ -9,7 +9,7 @@ namespace Behaviors
         [SerializeField] private Transform _player;
         [SerializeField] private Rigidbody _playerRigidBody;
 
-        [SerializeField] private float _forwardSpeed = 1.0f;
+        [SerializeField] private float _forwardSpeed = 1.0f;//from SO
         [SerializeField] private float _maxLateralSpeed = 20.0f;
         [SerializeField] private float _upwardForce = 100.0f;
         // Moves the root forward but the player inside the root moves independently, but cannot move forward (or can move 

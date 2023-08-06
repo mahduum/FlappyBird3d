@@ -6,6 +6,8 @@ namespace Utilities.Grid
     public class SimpleGridObstacleDataCreator : IGridElementMaker<ObstacleData>
     {
         public float MaxHeight { get; }
+
+        public bool SkipEverySecondRow { get; } = true;
         //todo
         public SimpleGridObstacleDataCreator(float maxHeight)
         {
@@ -14,14 +16,31 @@ namespace Utilities.Grid
         public ObstacleData Create(IGridInfoProvider gridInfoProvider, int index)
         {
             //todo set elements with seed
-            var elementSeed = gridInfoProvider.Origin.magnitude + index;
-            var height = Random.value * MaxHeight;
-            if (height > MaxHeight / 2 && Random.value < 0.8f)
+            //var elementSeed = gridInfoProvider.Origin.magnitude + index;
+
+            if (ShouldSkip(gridInfoProvider, index))
             {
-                height = MaxHeight - height;
+                return new ObstacleData()
+                {
+                    Type = ObstacleType.None
+                };
             }
             
-            return new ObstacleData() {Height = height, Type = ObstacleType.Column};
+            var bottomHeight = Random.value * MaxHeight;
+            var topHeight = MaxHeight - bottomHeight;
+            
+            return new ObstacleData()//todo into struct?
+            {
+                BottomHeight = bottomHeight,
+                TopHeight = topHeight,
+                Type = ObstacleType.Column
+            };
+        }
+
+        private bool ShouldSkip(IGridInfoProvider gridInfoProvider, int index)
+        {
+            (int row, int column) = gridInfoProvider.GetRowAndColumnFromIndex(index);
+            return SkipEverySecondRow && row % 2 == 0;
         }
     }
     
@@ -35,11 +54,13 @@ namespace Utilities.Grid
         int NumCellsX { get; }
         int NumCellsY { get; }
         Vector2 Origin { get; set; }
+        (int row, int column) GetRowAndColumnFromIndex(int index);
     }
     
     public interface IHasHeight
     {
-        float Height { get; }
+        float BottomHeight { get; }
+        float TopHeight { get; }
     }
     
     public class Grid2d<TGridElement, TGridElementMaker> : IGridInfoProvider where TGridElementMaker : IGridElementMaker<TGridElement> where TGridElement : IHasHeight
@@ -104,14 +125,58 @@ namespace Utilities.Grid
     
         public Bounds GetCellBounds(int index)
         {
-            var gridSpaceY = index / NumCellsX;
-            var gridSpaceX = gridSpaceY * NumCellsX - index;
-            var center = new Vector3(Origin.x + (CellSize.x * gridSpaceX) - CellSize.x / 2, YOffset,
-                Origin.y + (CellSize.y * gridSpaceY) - CellSize.y / 2);
-            var cellHeight = Elements.Length > index ? Elements[index].Height : 0;
+            (int gridSpaceX, int gridSpaceY) = GetGridSpaceCoordsFromIndex(index);
+            var center = GetCellBoundCenter(gridSpaceX, gridSpaceY, YOffset);
+            var cellHeight = Elements.Length > index ? Elements[index].BottomHeight : 0;
             var bounds = new Bounds(center, new Vector3(CellSize.x, cellHeight, CellSize.y));
             return bounds;
         }
+
+        public (Bounds bottom, Bounds top) GetCellBoundsComplementPair(int index)
+        {
+            var bottom = GetCellBounds(index);
+            var cellHeight =  Elements.Length > index ? Elements[index].TopHeight : 0;
+            (int gridSpaceX, int gridSpaceY) = GetGridSpaceCoordsFromIndex(index);
+            var center = GetCellBoundCenter(gridSpaceX, gridSpaceY, -YOffset);
+            var top = new Bounds(center, new Vector3(CellSize.x, cellHeight, CellSize.y));
+            return (bottom, top);
+        }
+
+        private (int gridSpaceX, int gridSpaceY) GetGridSpaceCoordsFromIndex(int index)
+        {
+            var gridSpaceY = index / NumCellsX;
+            var gridSpaceX = gridSpaceY * NumCellsX - index;
+            return (gridSpaceX, gridSpaceY);
+        }
+
+        public Vector3 GetCellBoundCenter(int gridSpaceX, int gridSpaceY, float yOffset)
+        {
+            return new Vector3(Origin.x + (CellSize.x * gridSpaceX) - CellSize.x / 2, yOffset,
+                Origin.y + (CellSize.y * gridSpaceY) + CellSize.y / 2);
+        }
+
+        public (int row, int column) GetRowAndColumnFromIndex(int index)
+        {
+            (int gridSpaceX, int gridSpaceY) = GetGridSpaceCoordsFromIndex(index);
+            return (gridSpaceY, gridSpaceX);
+        }
+
+        /*todo implement row and diagonal spacings such that we can do this:
+            _____
+            |***|
+            |...|
+            |***|
+            -----
+            
+            and this:
+            _____
+            |*.*|
+            |.*.|
+            |*.*|
+            -----
+            
+            obstacles maker can implement this
+         */
     }
     
     public class SquareGrid2d<TGridElement, TGridElementMaker> : Grid2d<TGridElement, TGridElementMaker> where TGridElementMaker : IGridElementMaker<TGridElement> where TGridElement : IHasHeight
@@ -129,7 +194,8 @@ namespace Utilities.Grid
     
     public class ObstacleData : IHasHeight//todo maybe replace data with actual behaviours?
     {
-        public float Height { get; set; }
+        public float BottomHeight { get; set; }
+        public float TopHeight { get; set; }
         public ObstacleType Type { get; set; }
     }
     

@@ -696,7 +696,7 @@ Rigidbody:
   m_Drag: 0
   m_AngularDrag: 0.05
   m_UseGravity: 1
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
@@ -899,9 +899,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _boxCollider: {fileID: 2080227851}
-  _topWall: {fileID: 1256368836}
-  _bottomWall: {fileID: 137642497}
+  _topWallRenderer: {fileID: 1256368836}
+  _bottomWallRenderer: {fileID: 137642497}
   _segmentUpdateChannel: {fileID: 11400000, guid: bf3614cf33e771745a03119b59a7fac3, type: 2}
+  _topWall: {fileID: 1256368834}
+  _bottomWall: {fileID: 137642495}
+  _gridCellsOnSide: 8
+  _gapSize: 5
+  _obstacleBoundsReductionPercent: 10
 --- !u!65 &2080227851
 BoxCollider:
   m_ObjectHideFlags: 0
