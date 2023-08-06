@@ -6,19 +6,21 @@ namespace Utilities.Grid
     public class SimpleGridObstacleDataCreator : IGridElementMaker<ObstacleData>
     {
         public float MaxHeight { get; }
+        public float MinHeight { get; }
 
         public bool SkipEverySecondRow { get; } = true;
         //todo
-        public SimpleGridObstacleDataCreator(float maxHeight)
+        public SimpleGridObstacleDataCreator(float maxHeight, float minHeight)
         {
             MaxHeight = maxHeight;
+            MinHeight = minHeight;
         }
         public ObstacleData Create(IGridInfoProvider gridInfoProvider, int index)
         {
             //todo set elements with seed
             //var elementSeed = gridInfoProvider.Origin.magnitude + index;
 
-            if (ShouldSkip(gridInfoProvider, index))
+            if (ShouldSkip(gridInfoProvider, index) || ShouldSkipRandom())
             {
                 return new ObstacleData()
                 {
@@ -28,11 +30,15 @@ namespace Utilities.Grid
             
             var bottomHeight = Random.value * MaxHeight;
             var topHeight = MaxHeight - bottomHeight;
+
+            //todo implement unpaired obstacles
+            bool hasBottom = bottomHeight > MinHeight;
+            bool hasTop = topHeight > MinHeight;
             
-            return new ObstacleData()//todo into struct?
+            return new ObstacleData()//todo implement single element obstacle
             {
-                BottomHeight = bottomHeight,
-                TopHeight = topHeight,
+                BottomHeight = hasBottom ? bottomHeight : 0,
+                TopHeight = hasTop ? topHeight : 0,
                 Type = ObstacleType.Column
             };
         }
@@ -42,6 +48,8 @@ namespace Utilities.Grid
             (int row, int column) = gridInfoProvider.GetRowAndColumnFromIndex(index);
             return SkipEverySecondRow && row % 2 == 0;
         }
+
+        private bool ShouldSkipRandom() => Random.value > 0.7f;
     }
     
     public interface IGridElementMaker<out TGridElement>
@@ -192,11 +200,12 @@ namespace Utilities.Grid
         }
     }
     
-    public class ObstacleData : IHasHeight//todo maybe replace data with actual behaviours?
+    public struct ObstacleData : IHasHeight//todo maybe replace data with actual behaviours?
     {
         public float BottomHeight { get; set; }
         public float TopHeight { get; set; }
         public ObstacleType Type { get; set; }
+        public bool HasGap => BottomHeight > 0 && TopHeight > 0;
     }
     
     public enum ObstacleType

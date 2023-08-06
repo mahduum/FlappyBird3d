@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using UniRx.Triggers;
+using UnityEngine;
 using UnityEngine.AddressableAssets;
 
 namespace Behaviors
@@ -8,6 +9,8 @@ namespace Behaviors
         /*elements: (shaft, top), reward mesh*/
         
         [SerializeField] private AssetReference _rewardTypeA;
+        [SerializeField] private BoxCollider _gapCollider;
+        [SerializeField] private GameObject _gap;
 
         private int _index;
         private Bounds combinedBounds;
@@ -15,6 +18,8 @@ namespace Behaviors
         void Start()
         {
             combinedBounds = CalculateCombinedBounds(transform);
+
+            _gapCollider.OnTriggerExitAsObservable();
         }
 
         private Bounds CalculateCombinedBounds(Transform currentTransform)
