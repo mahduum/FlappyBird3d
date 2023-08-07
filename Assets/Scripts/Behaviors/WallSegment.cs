@@ -106,7 +106,7 @@ namespace Behaviors
                         c =>
                         {
                             Debug.Log($"Collided with {c.tag}, on bottom obstacle index: {index}");
-                            _gameStateChannel.RaiseEvent(GameState.GameOver);
+                            //_gameStateChannel.RaiseEvent(GameState.GameOver);
                         }).AddTo(this);
                 }
                 
@@ -126,7 +126,7 @@ namespace Behaviors
                         c =>
                         {
                             Debug.Log($"Collided with {c.tag}, on top obstacle index: {index}");
-                            _gameStateChannel.RaiseEvent(GameState.GameOver);
+                            //_gameStateChannel.RaiseEvent(GameState.GameOver);
                         }).AddTo(this);
                 }
 

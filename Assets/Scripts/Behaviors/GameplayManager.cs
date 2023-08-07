@@ -17,12 +17,12 @@ namespace Behaviors
         //or use timed start anyway
         private void Awake()
         {
-            _gameStateChannel.OnGameStateChanged += OnGameStateChanged;
+            //_gameStateChannel.OnGameStateChanged += OnGameStateChanged;
         }
 
         void Start()
         {
-            enabled = false;
+            //enabled = false;
             Observable.Interval(TimeSpan.FromSeconds(1)).Take(CountTo).Subscribe(seconds =>
             {
                 int displaySeconds = CountTo - (int)seconds;
