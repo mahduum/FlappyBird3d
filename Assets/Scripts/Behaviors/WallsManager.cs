@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SOs;
 using UnityEditor;
 using UnityEngine;
 
@@ -23,15 +24,14 @@ namespace Behaviors
             _segmentUpdateChannel.OnSegmentExit += UpdateWallsPosition;
         }
 
+        private void OnDestroy()
+        {
+            _segmentUpdateChannel.OnSegmentExit -= UpdateWallsPosition;
+        }
+
         void Start()
         {
             InstantiateWalls();
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-        
         }
 
         private void OnValidate()
@@ -48,7 +48,7 @@ namespace Behaviors
         {
             //todo first take on update, take last and append it at the front, and reinitialize obstacles (LATER)
             var first = _wallCompositePool[0];
-            var last = _wallCompositePool[_wallCompositePool.Count - 1];
+            var last = _wallCompositePool[^1];
             first.transform.position = OffsetPosition(last.transform.position);
             _wallCompositePool.RemoveAt(0);
             _wallCompositePool.Add(first);//or sort, but useless to go through all of it
@@ -81,7 +81,7 @@ namespace Behaviors
 
             int segmentsToSpawn = _visibleUnitsNumber - _wallCompositePool.Count;
             var position = _wallCompositePool.Count > 0
-                ? _wallCompositePool[_wallCompositePool.Count - 1].transform.position
+                ? _wallCompositePool[^1].transform.position
                 : transform.position;
 
             for (int i = 0; i < segmentsToSpawn; i++)
@@ -96,13 +96,18 @@ namespace Behaviors
         
             if (_wallCompositePool.Count > 1)
             {
-                _wallCompositePool.Sort((a, b) => (int)((a.transform.position.z - b.transform.position.z) * 1000.0f));//todo change to queue and sorting won't be needed
+                _wallCompositePool.Sort((a, b) => (int)((a.transform.position.z - b.transform.position.z) * 1000.0f));//todo change to queue then the sorting won't be needed
             }
         }
 
         private Vector3 OffsetPosition(Vector3 position)
         {
             return position + new Vector3(0, 0, DepthBound);
+        }
+
+        private void RepositionWalls()//TODO
+        {
+            //reset all transforms, set info to all wall to reposition to starting configuration, use pool to reconfigure segments
         }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using JetBrains.Annotations;
+using SOs;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,6 +8,7 @@ namespace Behaviors
 {
     public class PlayerController : MonoBehaviour
     {
+        [SerializeField] private SO_StateChannel _stateChannel;
         [SerializeField] private Transform _player;
         [SerializeField] private Rigidbody _playerRigidBody;
         [SerializeField] private float _maxLateralSpeed = 20.0f;
@@ -20,6 +22,12 @@ namespace Behaviors
         private void Awake()
         {
             //create another input controller here later???
+            _stateChannel.OnSpeedChanged += OnSpeedChanged;
+        }
+
+        private void OnDestroy()
+        {
+            _stateChannel.OnSpeedChanged -= OnSpeedChanged;
         }
 
         private void Start()
@@ -56,9 +64,9 @@ namespace Behaviors
         }
 
         [UsedImplicitly]
-        public void OnGameStart()
+        public void OnSpeedChanged(float currentSpeed)
         {
-            _forwardSpeed = 20.0f;//todo make different initial speed for each level from SO
+            _forwardSpeed = currentSpeed;//todo make different initial speed for each level from SO
         }
     }
 }

@@ -1,15 +1,16 @@
 using System;
+using SOs;
 using TMPro;
 using UniRx;
 using UnityEngine;
 
 namespace Behaviors
 {
-    public class Countdown : MonoBehaviour
+    public class CountdownCounter : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI _counter;
-
-        private readonly IntReactiveProperty _remainingSeconds = new IntReactiveProperty();
+        [SerializeField] private SO_StateChannel _stateChannel;
+        private readonly IntReactiveProperty _remainingSeconds = new();
         private IDisposable _counterFader;
 
         private void Awake()
@@ -19,6 +20,12 @@ namespace Behaviors
                 _counter.text = seconds.ToString();
                 StartAlphaDecrease();
             }).AddTo(_counter);
+            _stateChannel.OnCountdown += OnCountdown;
+        }
+
+        private void OnDestroy()
+        {
+            _stateChannel.OnCountdown -= OnCountdown;
         }
 
         public void OnCountdown(int seconds)

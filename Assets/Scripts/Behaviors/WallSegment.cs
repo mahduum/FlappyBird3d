@@ -1,3 +1,4 @@
+using SOs;
 using UniRx;
 using UniRx.Triggers;
 using UnityEngine;
@@ -14,9 +15,11 @@ namespace Behaviors
         [FormerlySerializedAs("_bottomWall")] [SerializeField] private Renderer _bottomWallRenderer;
         [SerializeField] private SO_SegmentUpdateChannel _segmentUpdateChannel;
         [SerializeField] private SO_ScoreUpdateChannel _scoreUpdateChannel;
-        [SerializeField] private SO_GameStateChannel _gameStateChannel;
+        [FormerlySerializedAs("_gameStateChannel")] [SerializeField] private SO_StateChannel _stateChannel;//todo???
         [SerializeField] private Wall _topWall;
         [SerializeField] private Wall _bottomWall;
+        [SerializeField] private Wall _leftWall;
+        [SerializeField] private Wall _rightWall;
         [SerializeField] private int _gridCellsOnSide = 8;//from SO
         [SerializeField] private float _gapSize = 5.0f;//from SO depending on level
 
@@ -50,14 +53,14 @@ namespace Behaviors
             SpawnObstacles();
         }
         
-        //todo activate colliders on segment collider enter
+        //todo activate colliders on segment collider enter, disable all far away segments
 
         private void UpdateScoreThresholds()
         {
             
         }
 
-        private void OnTriggerExit(Collider other)
+        private void OnTriggerExit(Collider other)//increment the number of surpassed segments
         {
             _segmentUpdateChannel.RaiseEvent();
         }
@@ -73,10 +76,15 @@ namespace Behaviors
             _squareGrid2d.CreateElements();
         }
         
-        private void SpawnObstacles()
+        private void SpawnObstacles()//TODO BEFORE SPAWNING OBSTACLES TRY GETTING THEM FROM CACHE
         {
             for (int i = 0; i < _squareGrid2d.Elements.Length; i++)
             {
+                _topWall.OnTriggerEnterAsObservable().Subscribe(_ => _stateChannel.RaiseOnGameOver()).AddTo(this);
+                _bottomWall.OnTriggerEnterAsObservable().Subscribe(_ => _stateChannel.RaiseOnGameOver()).AddTo(this);
+                // _leftWall.OnTriggerEnterAsObservable().Subscribe(_ => _stateChannel.RaiseOnGameOver()).AddTo(this);
+                // _rightWall.OnTriggerEnterAsObservable().Subscribe(_ => _stateChannel.RaiseOnGameOver()).AddTo(this);
+                
                 var obstacleData = _squareGrid2d.Elements[i];
                 if (obstacleData.Type == ObstacleType.None)
                 {
@@ -84,9 +92,7 @@ namespace Behaviors
                 }
                 
                 var index = i;
-
                 
-
                 (Bounds desiredBoundsBottom, Bounds desiredBoundsTop) = _squareGrid2d.GetCellBoundsComplementPair(i);//todo is squashed along the z or 2d y, and height position is wrong
 
                 //todo make a method to do both
@@ -106,7 +112,7 @@ namespace Behaviors
                         c =>
                         {
                             Debug.Log($"Collided with {c.tag}, on bottom obstacle index: {index}");
-                            //_gameStateChannel.RaiseEvent(GameState.GameOver);
+                            _stateChannel.RaiseOnGameOver();
                         }).AddTo(this);
                 }
                 
@@ -126,12 +132,12 @@ namespace Behaviors
                         c =>
                         {
                             Debug.Log($"Collided with {c.tag}, on top obstacle index: {index}");
-                            //_gameStateChannel.RaiseEvent(GameState.GameOver);
+                            _stateChannel.RaiseOnGameOver();//todo or inform game manager?
                         }).AddTo(this);
                 }
 
                 //gap
-                if (obstacleData.HasGap == false || obstacleTop == null)
+                if (obstacleData.HasGap == false || obstacleTop == null || obstacleBottom == null)
                 {
                     continue;
                 }
@@ -145,7 +151,7 @@ namespace Behaviors
                     currentObstacleBoundsTop.center.y - currentObstacleBoundsTop.extents.y,
                     currentObstacleBoundsTop.center.z);
                 var gapCenter = Vector3.Lerp(bottomObstacleYOffset, topObstacleYOffset, 0.5f);
-                var gap = new GameObject($"Gap_{index}");
+                var gap = new GameObject($"Gap_{index}");//todo add special transparent material
                 gap.transform.SetParent(transform);
                 gap.transform.position = gapCenter;
                 var gapCollider = gap.AddComponent<BoxCollider>();

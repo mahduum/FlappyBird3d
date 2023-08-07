@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9cc94e566f230e14dafa098a3f9dfc0b, type: 3}
+  m_Name: SpeedThresholds
+  m_EditorClassIdentifier: 
+  ThresholdSpeeds:
+  - Threshold: 0
+    Speed: 10
+  - Threshold: 5
+    Speed: 15
+  - Threshold: 10
+    Speed: 20
+  - Threshold: 15
+    Speed: 25
+  - Threshold: 25
+    Speed: 30
+  - Threshold: 40
+    Speed: 35
+  - Threshold: 60
+    Speed: 40
+  - Threshold: 100
+    Speed: 50
+  - Threshold: 150
+    Speed: 60
