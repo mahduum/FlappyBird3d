@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using SOs;
 using UniRx;
 using UniRx.Triggers;
@@ -23,6 +24,7 @@ namespace Behaviors
         [SerializeField] private int _gridCellsOnSide = 8;//from SO
         [SerializeField] private float _gapSize = 5.0f;//from SO depending on level
 
+        private List<GameObject> _obstacles = new List<GameObject>();//take obstacle with current index, at the end of the loop deactivate remaining obstacles, or first deactivate them
         //todo make TotalHeight, and MaxHeight for single obstacle (top and bottom) such that there is no too short obstacles to display the top of the mesh
         private float MaxHeight =>
             Vector3.Distance(_topWallRenderer.transform.position, _bottomWallRenderer.transform.position) -
@@ -50,7 +52,7 @@ namespace Behaviors
         
         void Start()
         {
-            SpawnObstacles();
+            PlaceObstacles();
         }
         
         //todo activate colliders on segment collider enter, disable all far away segments
@@ -67,7 +69,7 @@ namespace Behaviors
         
         private void InitializeGrid()
         {
-            var position = _bottomWall.transform.position;//todo make individual offsets for top and bottom
+            var position = _bottomWall.transform.position;
             _squareGrid2d ??= new SquareGrid2d<ObstacleData, SimpleGridObstacleDataCreator>(
                 _gridCellsOnSide,
                 position,
@@ -75,9 +77,43 @@ namespace Behaviors
                 new SimpleGridObstacleDataCreator(MaxHeight, MinHeight));
             _squareGrid2d.CreateElements();
         }
-        
-        private void SpawnObstacles()//TODO BEFORE SPAWNING OBSTACLES TRY GETTING THEM FROM CACHE
+
+        private void DeactivateUnusedObstacles()
         {
+            for (int i = _squareGrid2d.Elements.Length; i < _obstacles.Count; i++)
+            {
+                _obstacles[i].SetActive(false);//todo that are less than pairs! total number
+            }
+        }
+
+        private GameObject PlaceObstacleRelativeToWall(Transform wallParent, Bounds? desiredBounds)
+        {
+            GameObject obstacle = null;
+            if (desiredBounds.HasValue)
+            {
+                obstacle = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                var currentBoundsSizeBottom = obstacle.GetComponent<Renderer>()?.bounds.size?? Vector3.zero;
+                var scaleToFitBoundsBottom = new Vector3((desiredBounds.Value.size.x * ObstacleBoundsReductionMultiplier) / currentBoundsSizeBottom.x,
+                    desiredBounds.Value.size.y / currentBoundsSizeBottom.y, (desiredBounds.Value.size.z * ObstacleBoundsReductionMultiplier) / currentBoundsSizeBottom.z);
+
+                obstacle.transform.localScale = scaleToFitBoundsBottom;
+                obstacle.transform.SetParent(wallParent);
+                obstacle.transform.position = new Vector3(desiredBounds.Value.center.x, desiredBounds.Value.center.y, desiredBounds.Value.center.z);
+                obstacle.AddComponent<BoxCollider>().OnTriggerEnterAsObservable().Subscribe(
+                    c =>
+                    {
+                        Debug.Log($"Collided {c.tag} with obstacle");
+                        _stateChannel.RaiseOnGameOver();
+                    }).AddTo(this);
+            }
+
+            return obstacle;
+        }
+        
+        private void PlaceObstacles()//TODO BEFORE SPAWNING OBSTACLES TRY GETTING THEM FROM CACHE
+        {
+            DeactivateUnusedObstacles();
+            
             for (int i = 0; i < _squareGrid2d.Elements.Length; i++)
             {
                 _topWall.OnTriggerEnterAsObservable().Subscribe(_ => _stateChannel.RaiseOnGameOver()).AddTo(this);
@@ -91,79 +127,64 @@ namespace Behaviors
                     continue;
                 }
                 
-                var index = i;
-                
-                (Bounds desiredBoundsBottom, Bounds desiredBoundsTop) = _squareGrid2d.GetCellBoundsComplementPair(i);//todo is squashed along the z or 2d y, and height position is wrong
+                var index = i;//optionally use to mark obstacles
 
-                //todo make a method to do both
-                //bottom
-                GameObject obstacleBottom = null;
-                if (obstacleData.BottomHeight > 0)
-                {
-                    obstacleBottom = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                    var currentBoundsSizeBottom = obstacleBottom.GetComponent<Renderer>()?.bounds.size?? Vector3.zero;
-                    var scaleToFitBoundsBottom = new Vector3((desiredBoundsBottom.size.x * ObstacleBoundsReductionMultiplier) / currentBoundsSizeBottom.x,
-                        desiredBoundsBottom.size.y / currentBoundsSizeBottom.y, (desiredBoundsBottom.size.z * ObstacleBoundsReductionMultiplier) / currentBoundsSizeBottom.z);
+                (Bounds? desiredBoundsBottom, Bounds? desiredBoundsTop) = obstacleData.GetBounds();
 
-                    obstacleBottom.transform.localScale = scaleToFitBoundsBottom;
-                    obstacleBottom.transform.SetParent(_bottomWall.transform);
-                    obstacleBottom.transform.position = new Vector3(desiredBoundsBottom.center.x, _bottomWall.transform.position.y + desiredBoundsBottom.extents.y * _bottomWall.transform.up.y, desiredBoundsBottom.center.z);
-                    obstacleBottom.AddComponent<BoxCollider>().OnTriggerEnterAsObservable().Subscribe(
-                        c =>
-                        {
-                            Debug.Log($"Collided with {c.tag}, on bottom obstacle index: {index}");
-                            _stateChannel.RaiseOnGameOver();
-                        }).AddTo(this);
-                }
-                
-                //top
-                GameObject obstacleTop = null;
-                if (obstacleData.TopHeight > 0)
-                {
-                    obstacleTop = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                    var currentBoundsSizeTop = obstacleTop.GetComponent<Renderer>()?.bounds.size?? Vector3.zero;
-                    var scaleToFitBoundsTop = new Vector3((desiredBoundsTop.size.x * ObstacleBoundsReductionMultiplier) / currentBoundsSizeTop.x,
-                        desiredBoundsTop.size.y / currentBoundsSizeTop.y, (desiredBoundsTop.size.z * ObstacleBoundsReductionMultiplier) / currentBoundsSizeTop.z);
-                
-                    obstacleTop.transform.localScale = scaleToFitBoundsTop;
-                    obstacleTop.transform.SetParent(_topWall.transform);
-                    obstacleTop.transform.position = new Vector3(desiredBoundsTop.center.x, _topWall.transform.position.y + desiredBoundsTop.extents.y * _topWall.transform.up.y, desiredBoundsTop.center.z);
-                    obstacleTop.AddComponent<BoxCollider>().OnTriggerEnterAsObservable().Subscribe(
-                        c =>
-                        {
-                            Debug.Log($"Collided with {c.tag}, on top obstacle index: {index}");
-                            _stateChannel.RaiseOnGameOver();//todo or inform game manager?
-                        }).AddTo(this);
-                }
+                GameObject obstacleBottom = PlaceObstacleRelativeToWall(_bottomWall.transform, desiredBoundsBottom);
+                GameObject obstacleTop = PlaceObstacleRelativeToWall(_topWall.transform, desiredBoundsTop);
 
-                //gap
-                if (obstacleData.HasGap == false || obstacleTop == null || obstacleBottom == null)
-                {
-                    continue;
-                }
-
-                var currentObstacleBoundsTop = obstacleTop.GetComponent<Renderer>().bounds;
-                var currentObstacleBoundsBottom = obstacleBottom.GetComponent<Renderer>().bounds;
-                var bottomObstacleYOffset = new Vector3(currentObstacleBoundsBottom.center.x,
-                    currentObstacleBoundsBottom.center.y + currentObstacleBoundsBottom.extents.y,
-                    currentObstacleBoundsBottom.center.z);
-                var topObstacleYOffset = new Vector3(currentObstacleBoundsTop.center.x,
-                    currentObstacleBoundsTop.center.y - currentObstacleBoundsTop.extents.y,
-                    currentObstacleBoundsTop.center.z);
-                var gapCenter = Vector3.Lerp(bottomObstacleYOffset, topObstacleYOffset, 0.5f);
-                var gap = new GameObject($"Gap_{index}");//todo add special transparent material
-                gap.transform.SetParent(transform);
-                gap.transform.position = gapCenter;
-                var gapCollider = gap.AddComponent<BoxCollider>();
-                gapCollider.size = new Vector3(desiredBoundsTop.size.x, _gapSize * 2, desiredBoundsTop.size.z);//todo * 2 is temporary until more precise sizing of the gap and upper and lower part
-                //gapCollider.OnEnableAsObservable() use with reactive property to subscribe to events???
-                gapCollider.OnTriggerExitAsObservable().Subscribe(c =>
-                {
-                    //todo use later to give specific amount of points based on Obstacle SO settings, the obstacle will be instantiated and set component instead of temp cylinders and gaps
-                    Debug.Log($"Triggered with {c.tag}, on gap index: {index}");
-                    _scoreUpdateChannel.RaiseEvent(new GapScore());
-                }).AddTo(this);
+                SetGap(obstacleData, obstacleTop, obstacleBottom, index, desiredBoundsTop);
             }
+        }
+
+        private void SetGap(ObstacleData obstacleData, GameObject obstacleTop, GameObject obstacleBottom, int index,
+            Bounds? desiredBounds)
+        {
+            if (obstacleData.HasGap == false || obstacleTop == null || obstacleBottom == null || desiredBounds.HasValue == false)
+            {
+                return;
+            }
+
+            var currentObstacleBoundsTop = obstacleTop.GetComponent<Renderer>().bounds;
+            var currentObstacleBoundsBottom = obstacleBottom.GetComponent<Renderer>().bounds;
+            
+            var gapCenter = FindMidPointBetweenBoundsTopAndBottom(currentObstacleBoundsBottom, currentObstacleBoundsTop);
+
+            var gap = new GameObject($"Gap_{index}"); //todo add special transparent material, make cache (gaps can have rewards on them
+            
+            gap.transform.SetParent(transform);
+            gap.transform.position = gapCenter;
+            var gapCollider = gap.AddComponent<BoxCollider>();
+            gapCollider.size =
+                new Vector3(
+                    desiredBounds.Value.size.x,
+                    _gapSize * 2,//todo * 2 is temporary until more precise sizing of the gap and upper and lower part
+                    desiredBounds.Value.size.z
+                    );
+            //gapCollider.OnEnableAsObservable() use with reactive property to subscribe to events???
+            gapCollider.OnTriggerExitAsObservable().Subscribe(c =>
+            {
+                //todo use later to give specific amount of points based on Obstacle SO settings, the obstacle will be instantiated and set component instead of temp cylinders and gaps
+                Debug.Log($"Triggered with {c.tag}, on gap index: {index}");
+                _scoreUpdateChannel.RaiseEvent(new GapScore());
+            }).AddTo(this);
+        }
+
+        private static Vector3 FindMidPointBetweenBoundsTopAndBottom(Bounds boundsA, Bounds boundsB)
+        {
+            //no matter the arg order establish offset direction
+            var deltaYFromAtoB = boundsB.center.y - boundsA.center.y;
+            var deltaYNormalizedFromAtoB = deltaYFromAtoB / Mathf.Abs(deltaYFromAtoB);
+            var deltaYNormalizedFromBtoA = -deltaYNormalizedFromAtoB;
+            var obstacleAOffset = new Vector3(boundsA.center.x,
+                boundsA.center.y + boundsA.extents.y * deltaYNormalizedFromAtoB,
+                boundsA.center.z);
+            var obstacleBOffset = new Vector3(boundsB.center.x,
+                boundsB.center.y + boundsB.extents.y * deltaYNormalizedFromBtoA,
+                boundsB.center.z);
+            var gapCenter = Vector3.Lerp(obstacleBOffset, obstacleAOffset, 0.5f);
+            return gapCenter;
         }
     }
 }
