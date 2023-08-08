@@ -172,7 +172,9 @@ namespace Utilities.Grid
          */
     }
     
-    public class SquareGrid2d<TGridElement, TGridElementMaker> : Grid2d<TGridElement, TGridElementMaker> where TGridElementMaker : IGridElementMaker<TGridElement> where TGridElement : IHasBounds
+    public class SquareGrid2d<TGridElement, TGridElementMaker> : Grid2d<TGridElement, TGridElementMaker>
+        where TGridElementMaker : IGridElementMaker<TGridElement>
+        where TGridElement : IHasBounds
     {
         public SquareGrid2d(int numCells, Vector3 origin, Vector2 size, TGridElementMaker obstacleMaker) : base(numCells, numCells, origin, size, obstacleMaker)
         {
@@ -181,11 +183,11 @@ namespace Utilities.Grid
         
         public void ResizeGrid(int numCells)
         {
-            //todo (or make new grid)
+            //todo (or remake grid?)
         }
     }
     
-    public struct ObstacleData : IHasBounds//todo maybe replace data with actual behaviours?
+    public struct ObstacleData : IHasBounds
     {
         public ObstacleData(IGridInfoProvider owner, int index)
         {
@@ -197,7 +199,7 @@ namespace Utilities.Grid
         }
 
         public int Index { get; set; }
-        public IGridInfoProvider Owner { get; }
+        private IGridInfoProvider Owner { get; }
         public float BottomSegmentHeight { get; set; }
         public float TopSegmentHeight { get; set; }
         public ObstacleType Type { get; set; }
