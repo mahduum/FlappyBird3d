@@ -7,36 +7,34 @@ namespace Behaviors
 {
     public class WallsManager : MonoBehaviour
     {
-        [SerializeField] private PlayerController _playerController;//todo naive solution: follow the position every frame, refactor to recalculate only on events
+        [SerializeField] private PlayerController _playerController;
         [SerializeField] private int _visibleUnitsNumber;
         [SerializeField] private Renderer _unitRenderer;
         [SerializeField] private GameObject _wallCompositeTemplate;
         [SerializeField] private SO_SegmentUpdateChannel _segmentUpdateChannel;
+        [SerializeField] private SO_StateChannel _stateChannel;
     
         //todo add side walls, so obstacles but heating up the player or can have sudden wind gusts
 
         private Vector3 SpawningDirection => _playerController.transform.forward;
         private float DepthBound => _unitRenderer.bounds.size.z;
-        private readonly List<GameObject> _wallCompositePool = new List<GameObject>();//todo order it by z
+        private readonly List<GameObject> _wallCompositePool = new();//todo order it by z
 
         private void Awake()
         {
-            _segmentUpdateChannel.OnSegmentExit += UpdateWallsPosition;
+            _segmentUpdateChannel.OnSegmentExit += UpdateSegmentsPosition;
+            _stateChannel.OnReset += ResetSegmentsPosition;
         }
 
         private void OnDestroy()
         {
-            _segmentUpdateChannel.OnSegmentExit -= UpdateWallsPosition;
+            _segmentUpdateChannel.OnSegmentExit -= UpdateSegmentsPosition;
+            _stateChannel.OnReset -= ResetSegmentsPosition;
         }
 
         void Start()
         {
-            InstantiateWalls();
-        }
-
-        private void OnValidate()
-        {
-            //InstantiateWalls();
+            InstantiateSegments();
         }
 
         private void OnDrawGizmos()
@@ -44,9 +42,12 @@ namespace Behaviors
             Gizmos.DrawLine(transform.position, SpawningDirection * DepthBound);
         }
 
-        private void UpdateWallsPosition()
+        private void UpdateSegmentsPosition()
         {
-            //todo first take on update, take last and append it at the front, and reinitialize obstacles (LATER)
+            if (Mathf.Abs(Vector3.Distance(_playerController.transform.position, transform.position)) < DepthBound)
+            {
+                return;//todo updates on reset must find better fix than this
+            }
             var first = _wallCompositePool[0];
             var last = _wallCompositePool[^1];
             first.transform.position = OffsetPosition(last.transform.position);
@@ -54,7 +55,7 @@ namespace Behaviors
             _wallCompositePool.Add(first);//or sort, but useless to go through all of it
         }
 
-        private void InstantiateWalls()
+        private void InstantiateSegments()
         {
             if (_wallCompositePool.Count == _visibleUnitsNumber)
             {
@@ -100,14 +101,26 @@ namespace Behaviors
             }
         }
 
+        private void ResetSegmentsPosition()
+        {
+            Debug.Log("Resetting walls...");
+            var position = transform.position;
+            for (int i = 0; i < _wallCompositePool.Count; i++)
+            {
+                if (i > 0)
+                {
+                    position = OffsetPosition(position);
+                }
+                var segment = _wallCompositePool[i];
+                segment.transform.position = position;
+            }
+            
+            InstantiateSegments();
+        }
+
         private Vector3 OffsetPosition(Vector3 position)
         {
             return position + new Vector3(0, 0, DepthBound);
-        }
-
-        private void RepositionWalls()//TODO
-        {
-            //reset all transforms, set info to all wall to reposition to starting configuration, use pool to reconfigure segments
         }
     }
 }

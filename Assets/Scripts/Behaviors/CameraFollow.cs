@@ -16,11 +16,12 @@ namespace Behaviors
         {
             _offset = _toFollow.position - transform.position;
         }
-
-        // Update is called once per frame
+        
         void LateUpdate()
         {
-            transform.position = _toFollow.position - _offset;
+            var positionFullOffset = _toFollow.position - _offset;
+            transform.position = new Vector3(positionFullOffset.x, transform.position.y, positionFullOffset.z);
+            transform.LookAt(_toFollow);
         }
     }
 }

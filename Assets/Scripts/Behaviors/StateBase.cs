@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UniRx;
 using UnityEngine;
+using static Behaviors.LoadingManager;
 
 namespace Behaviors
 {
@@ -11,7 +13,6 @@ namespace Behaviors
         protected StateBase(GameplayManager gameplayManager)
         {
             GameplayManager = gameplayManager;
-            Time.timeScale = 1;
         }
 
         ~StateBase()
@@ -29,21 +30,32 @@ namespace Behaviors
             
         }
 
-        public virtual void SetSpeed()
+        public virtual void PauseGame()
         {
-            
-            
         }
 
-        public virtual void SetInput()
+        public virtual void ResumeGame()
         {
-            
         }
-        
+
+        public virtual async void Exit()
+        {
+            await UniTask.CompletedTask;
+        }
     }
-    
-    //states: Loading, CountdownCounter, Paused, GameOver, Flight, 
-    //public class
+
+    public class Reset : StateBase
+    {
+        public Reset(GameplayManager gameplayManager) : base(gameplayManager)
+        {
+        }
+
+        public override void Start()
+        {
+            GameplayManager.StateChannel.RaiseOnReset();
+            GameplayManager.SetState(new Countdown(GameplayManager));
+        }
+    }
 
     public class Countdown : StateBase
     {
@@ -55,12 +67,11 @@ namespace Behaviors
 
         public override void Start()
         {
-            //todo set gravity off
             GameplayManager.CurrentSegment.Value = 0;
             Observable.Interval(TimeSpan.FromSeconds(1)).Take(CountTo).Subscribe(seconds =>
             {
                 int displaySeconds = CountTo - (int)seconds;
-                GameplayManager.StateChannel.OnCountdown.Invoke(displaySeconds);
+                GameplayManager.StateChannel.RaiseOnCountdown(displaySeconds);
             }, () => GameplayManager.SetState(new Flight(GameplayManager))).AddTo(GameplayManager);
         }
     }
@@ -73,7 +84,6 @@ namespace Behaviors
 
         public override void Start()
         {
-            //todo set gravity on
             GameplayManager.CurrentSegment
                 .DistinctUntilChanged()
                 .Subscribe(count =>
@@ -92,24 +102,66 @@ namespace Behaviors
                 });
         }
 
-        public override void SetSpeed()//how to get the last speed???
+        public override void PauseGame()
         {
-            base.SetSpeed();
-            
+            GameplayManager.SetState(new Pause(GameplayManager));
         }
     }
 
-    public class Pause : StateBase//todo 
+    public class Pause : StateBase
     {
+        private float timeScale;
         public Pause(GameplayManager gameplayManager) : base(gameplayManager)
         {
-            //optionally remember the exact current speed of simply pause the game?
         }
 
         public override void Start()
         {
+            timeScale = Time.timeScale;
             Time.timeScale = 0;//cache and set back to cached
+            GameplayManager.GamePaused.SetActive(true);
             //show the game paused screen, subscribe to resume button
+        }
+
+        public override void ResumeGame()
+        {
+            GameplayManager.GamePaused.SetActive(false);
+            GameplayManager.SetState(new Flight(GameplayManager));
+            Time.timeScale = timeScale;
+        }
+
+        public override async void Exit()
+        {
+            Time.timeScale = 1;
+            await LoadMainMenuAsSingleScene();
+        }
+    }
+    
+    public class GameOver : StateBase
+    {
+        public GameOver(GameplayManager gameplayManager) : base(gameplayManager)
+        {
+        }
+
+        public override void Start()
+        {
+            Time.timeScale = 0;
+            GameplayManager.GameOver.SetActive(true);
+            GameplayManager.CurrentSegment.Value = 0;
+            //prompt saving and showing all the results
+        }
+
+        public override void ResumeGame()
+        {
+            GameplayManager.GameOver.SetActive(false);
+            GameplayManager.SetState(new Reset(GameplayManager));
+            Time.timeScale = 1;
+        }
+        
+        public override async void Exit()
+        {
+            Time.timeScale = 1;
+            await LoadMainMenuAsSingleScene();
         }
     }
 }

@@ -37,9 +37,7 @@ namespace Behaviors
         {
             _counter.alpha = 0;
         }
-        
-        /*1000ms, interval every frame, */
-        
+
         private void StartAlphaDecrease()
         {
             _counterFader?.Dispose();
@@ -47,7 +45,7 @@ namespace Behaviors
             _counterFader = Observable.EveryUpdate().TakeWhile(_ => _counter.alpha > 0).Subscribe(_ =>
             {
                 _counter.alpha -= Time.deltaTime;
-            }).AddTo(_counter);
+            }, () => _counterFader.Dispose()).AddTo(_counter);
         }
     }
 }

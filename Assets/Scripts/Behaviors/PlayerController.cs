@@ -1,4 +1,3 @@
-using System;
 using JetBrains.Annotations;
 using SOs;
 using UnityEngine;
@@ -23,16 +22,28 @@ namespace Behaviors
         {
             //create another input controller here later???
             _stateChannel.OnSpeedChanged += OnSpeedChanged;
+            _stateChannel.OnReset += OnReset;
         }
 
         private void OnDestroy()
         {
             _stateChannel.OnSpeedChanged -= OnSpeedChanged;
+            _stateChannel.OnReset -= OnReset;
         }
 
         private void Start()
         {
+            Reset();
+        }
+
+        private void Reset()
+        {
             _forwardSpeed = 0;
+            _playerRigidBody.useGravity = false;
+            _playerRigidBody.velocity = Vector3.zero;
+            transform.position = Vector3.zero;
+            transform.rotation = _player.rotation = Quaternion.identity;
+            _player.position = Vector3.zero;
         }
 
         // Update is called once per frame
@@ -67,6 +78,12 @@ namespace Behaviors
         public void OnSpeedChanged(float currentSpeed)
         {
             _forwardSpeed = currentSpeed;//todo make different initial speed for each level from SO
+            _playerRigidBody.useGravity = _forwardSpeed > 0;
+        }
+
+        private void OnReset()
+        {
+            Reset();
         }
     }
 }

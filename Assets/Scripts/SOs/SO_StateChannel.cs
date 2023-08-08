@@ -9,6 +9,7 @@ namespace SOs
         public UnityAction<float> OnSpeedChanged;
         public UnityAction OnGameOver;
         public UnityAction<int> OnCountdown;
+        public UnityAction OnReset;
 
         public void RaiseOnSpeedChanged(float currentSpeed)
         {
@@ -23,6 +24,11 @@ namespace SOs
         public void RaiseOnCountdown(int seconds)
         {
             OnCountdown?.Invoke(seconds);
+        }
+
+        public void RaiseOnReset()
+        {
+            OnReset?.Invoke();
         }
     }
 }

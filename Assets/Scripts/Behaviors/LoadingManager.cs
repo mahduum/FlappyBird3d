@@ -52,7 +52,11 @@ namespace Behaviors
             Debug.Log("Started delay.");
             await UniTask.Delay(TimeSpan.FromSeconds(3));
             Debug.Log("Ended delay.");
+            await LoadMainMenuAsSingleScene();
+        }
 
+        public static async UniTask LoadMainMenuAsSingleScene()
+        { 
             await SceneManager.LoadSceneAsync("MainMenu", LoadSceneMode.Single);
         }
     }

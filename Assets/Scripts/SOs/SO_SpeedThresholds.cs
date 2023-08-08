@@ -13,6 +13,6 @@ namespace SOs
             public float Speed;
         }
 
-        public List<DictionaryEntry> ThresholdSpeeds = new List<DictionaryEntry>();
+        public List<DictionaryEntry> ThresholdSpeeds = new();
     }
 }
