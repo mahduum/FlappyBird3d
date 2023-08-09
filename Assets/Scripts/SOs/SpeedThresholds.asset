@@ -14,20 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ThresholdSpeeds:
   - Threshold: 0
-    Speed: 10
-  - Threshold: 5
-    Speed: 15
-  - Threshold: 10
     Speed: 20
-  - Threshold: 15
+  - Threshold: 5
     Speed: 25
-  - Threshold: 25
+  - Threshold: 10
     Speed: 30
-  - Threshold: 40
+  - Threshold: 15
     Speed: 35
-  - Threshold: 60
+  - Threshold: 25
     Speed: 40
-  - Threshold: 100
+  - Threshold: 40
+    Speed: 45
+  - Threshold: 60
     Speed: 50
+  - Threshold: 100
+    Speed: 70
   - Threshold: 150
     Speed: 60

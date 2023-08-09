@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0df97babf052ec469baaeb53a6ac4ed, type: 3}
+  m_Name: GridObstacleSetting
+  m_EditorClassIdentifier: 
+  LevelThresholdsBySegmentIndex: 000000000a000000140000001e000000320000004b00000064000000
+  MaxObstaclesPerSide: 00000000030000000400000005000000060000000700000008000000
+  ObstacleMinHeightLimits:
+  - 1
+  - 0.1
+  - 0.15
+  - 0.2
+  - 0.25
+  - 0.2
+  - 0.15
+  ObstacleMaxHeightLimits:
+  - 0
+  - 0.3
+  - 0.4
+  - 0.45
+  - 0.5
+  - 0.6
+  - 0.8
+  GapSizes:
+  - 0
+  - 0.7
+  - 0.6
+  - 0.5
+  - 0.4
+  - 0.2
+  - 0.1
+  ObstacleProbability:
+  - 0
+  - 0.726
+  - 0.574
+  - 0.4
+  - 0.5
+  - 0.589
+  - 0.7

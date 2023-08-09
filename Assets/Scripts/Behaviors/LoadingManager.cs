@@ -10,10 +10,8 @@ namespace Behaviors
     public class LoadingManager : MonoBehaviour
     {
         [SerializeField] private Camera _splashCamera;
-        // Start is called before the first frame update
         private static LoadingManager _instance;
-
-        // Public property to access the singleton instance
+        
         public static LoadingManager Instance
         {
             get
@@ -21,8 +19,7 @@ namespace Behaviors
                 if (_instance == null)
                 {
                     _instance = FindObjectOfType<LoadingManager>();
-
-                    // If no instance is found in the scene, create a new one
+                    
                     if (_instance == null)
                     {
                         GameObject obj = new GameObject("_LoadingManager");

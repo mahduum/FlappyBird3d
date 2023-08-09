@@ -5,15 +5,13 @@ namespace Utilities.Grid
 {
     public class SimpleGridObstacleDataCreator : IGridElementMaker<ObstacleData>
     {
-        public float MaxHeight { get; }
-        public float MinHeight { get; }
-
+        private GridElementsSetting _gridElementsSetting;
         public bool SkipEverySecondRow { get; } = true;
+        
         //todo
-        public SimpleGridObstacleDataCreator(float maxHeight, float minHeight)
+        public SimpleGridObstacleDataCreator(GridElementsSetting gridElementsSetting)
         {
-            MaxHeight = maxHeight;
-            MinHeight = minHeight;
+            _gridElementsSetting = gridElementsSetting;
         }
         public ObstacleData Create(IGridInfoProvider gridInfoProvider, int index)
         {
@@ -24,17 +22,39 @@ namespace Utilities.Grid
             {
                 return new ObstacleData(gridInfoProvider, index);
             }
+
+            var topToBottomHeight = gridInfoProvider.AbsYOffset * 2;
+            var maxHeight = _gridElementsSetting.ElementMaxHeightLimit * topToBottomHeight;
+            var minHeight = _gridElementsSetting.ElementMinHeightLimit * topToBottomHeight;
             
-            var bottomHeight = Random.value * MaxHeight;
-            var topHeight = MaxHeight - bottomHeight;
+            var bottomHeight = Random.value * maxHeight;
+            var topHeight = maxHeight - bottomHeight;
             
-            bool hasBottom = bottomHeight > MinHeight;
-            bool hasTop = topHeight > MinHeight;
+            bool hasBottom = bottomHeight > minHeight;
+            bool hasTop = topHeight > minHeight;
+
+            var gapSize = 0.0f;
+            if (hasBottom && hasTop)
+            {
+                gapSize = _gridElementsSetting.GapSize * topToBottomHeight;
+                var currentGap = (topToBottomHeight - bottomHeight - topHeight);
+                var gapDelta = currentGap - gapSize;
+
+                if (bottomHeight > topHeight)
+                {
+                    bottomHeight += gapDelta;
+                }
+                else
+                {
+                    topHeight += gapDelta;
+                }
+            }
             
             return new ObstacleData(gridInfoProvider, index)
             {
                 BottomSegmentHeight = hasBottom ? bottomHeight : 0,
                 TopSegmentHeight = hasTop ? topHeight : 0,
+                GapSize = gapSize,
                 Type = ObstacleType.Column
             };
         }
@@ -45,7 +65,7 @@ namespace Utilities.Grid
             return SkipEverySecondRow && row % 2 == 0;
         }
 
-        private bool ShouldSkipRandom() => Random.value > 0.7f;
+        private bool ShouldSkipRandom() => Random.value > _gridElementsSetting.ElementProbability;
     }
     
     public interface IGridElementMaker<out TGridElement>
@@ -73,11 +93,10 @@ namespace Utilities.Grid
         public int NumCellsX { get; }
         public int NumCellsY { get; }
         public Vector2 Origin { get; set; }
-
         public float AbsYOffset { get; }
         public Vector2 Size { get; set; }
 
-        public Vector2 CellSize //todo cache
+        public Vector2 CellSize //todo cache this
         {
             get
             {
@@ -195,6 +214,7 @@ namespace Utilities.Grid
             Index = index;
             BottomSegmentHeight = 0;
             TopSegmentHeight = 0;
+            GapSize = 0;
             Type = ObstacleType.None;
         }
 
@@ -203,7 +223,8 @@ namespace Utilities.Grid
         public float BottomSegmentHeight { get; set; }
         public float TopSegmentHeight { get; set; }
         public ObstacleType Type { get; set; }
-        public bool HasGap => BottomSegmentHeight > 0 && TopSegmentHeight > 0;
+        public bool HasGap => GapSize > 0;
+        public float GapSize { get; set; }
 
         public (Bounds? bottomSegmentBounds, Bounds? topSegmentBounds) GetBounds()
         {

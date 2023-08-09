@@ -77,7 +77,7 @@ namespace Behaviors
         [UsedImplicitly]
         public void OnSpeedChanged(float currentSpeed)
         {
-            _forwardSpeed = currentSpeed;//todo make different initial speed for each level from SO
+            _forwardSpeed = currentSpeed;
             _playerRigidBody.useGravity = _forwardSpeed > 0;
         }
 

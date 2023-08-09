@@ -15,25 +15,23 @@ namespace Behaviors
         [SerializeField] private GameObject _gamePaused;
 
         public SO_StateChannel StateChannel => _stateChannel;
-        public SO_SegmentUpdateChannel SegmentUpdateChannel => _segmentUpdateChannel;//todo whatever may need it?
+        public SO_SegmentUpdateChannel SegmentUpdateChannel => _segmentUpdateChannel;
         public SO_SpeedThresholds SpeedThresholds => _speedThresholds;
         public GameObject GameOver => _gameOver;
         public GameObject GamePaused => _gamePaused;
 
-        public readonly IntReactiveProperty CurrentSegment = new();
+        public static IntReactiveProperty CurrentSegment = new();
         //public IReadOnlyReactiveProperty<int> CurrentSegment => _currentSegment;
 
         //todo use button start, but later switch it to timed start.
         //or use timed start anyway
         private void Awake()
         {
-            _segmentUpdateChannel.OnSegmentExit += IncrementSurpassedSegmentsCount;
             _stateChannel.OnGameOver += OnGameOver;
         }
 
         private void OnDestroy()
         {
-            _segmentUpdateChannel.OnSegmentExit -= IncrementSurpassedSegmentsCount;
             _stateChannel.OnGameOver -= OnGameOver;
         }
 
@@ -43,11 +41,6 @@ namespace Behaviors
             {
                 SetState(new Countdown(this));
             }
-        }
-
-        private void IncrementSurpassedSegmentsCount()
-        {
-            CurrentSegment.Value++;
         }
 
         private void OnGameOver()

@@ -1,10 +1,8 @@
-using System;
 using System.Collections.Generic;
 using SOs;
 using UniRx;
 using UniRx.Triggers;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.Serialization;
 using Utilities.Grid;
 using Utilities.Scores;
@@ -23,19 +21,15 @@ namespace Behaviors
         [SerializeField] private Wall _bottomWall;
         [SerializeField] private Wall _leftWall;
         [SerializeField] private Wall _rightWall;
-        [SerializeField] private int _gridCellsOnSide = 8;//from SO
-        [SerializeField] private float _gapSize = 5.0f;//from SO depending on level
 
         private readonly List<GameObject> _obstacles = new();
         private readonly List<GameObject> _gaps = new();
         
-        //todo make TotalHeight, and MaxHeight for single obstacle (top and bottom) such that there is no too short obstacles to display the top of the mesh
-        private float MaxHeight =>
-            Vector3.Distance(_topWallRenderer.transform.position, _bottomWallRenderer.transform.position) -
-            _gapSize * 2.0f;
+        public int? Index { get; private set; }
 
-        private float MinHeight => 3.0f;
-        
+        private WallsManager _owner;
+        private WallsManager Owner =>_owner ??= GetComponentInParent<WallsManager>();
+
         // Start is called before the first frame update
         // Based on index augment score on thresholds
         [Range(0, 99)]
@@ -45,26 +39,17 @@ namespace Behaviors
 
         private SquareGrid2d<ObstacleData, SimpleGridObstacleDataCreator> _squareGrid2d;
 
-        private Action _delayedObstaclesActivation;
-
         private void Awake()
         {
             _boxCollider.center = Vector3.zero;
             _boxCollider.size = new Vector3(_topWallRenderer.bounds.size.x,
                 Vector3.Distance(_topWallRenderer.transform.position, _bottomWallRenderer.transform.position), _topWallRenderer.bounds.size.z);
+        }
 
-            _stateChannel.OnReset += PlaceObstacles;
-            
+        public void Set(int index)
+        {
+            Index = index;
             InitializeGrid();
-        }
-
-        private void OnDestroy()
-        {
-            _stateChannel.OnReset -= PlaceObstacles;
-        }
-
-        void Start()
-        {
             PlaceObstacles();
         }
 
@@ -73,17 +58,18 @@ namespace Behaviors
         private void OnTriggerExit(Collider other)//increment the number of surpassed segments
         {
             _segmentUpdateChannel.RaiseEvent();
-            _delayedObstaclesActivation?.Invoke();
         }
 
         private void InitializeGrid()
         {
+            var gridSetting = Owner.GetOrCreateSegmentSettings(Index.GetValueOrDefault());
             var position = _bottomWall.transform.position;
-            _squareGrid2d ??= new SquareGrid2d<ObstacleData, SimpleGridObstacleDataCreator>(
-                _gridCellsOnSide,
+            _squareGrid2d = null;
+            _squareGrid2d = new SquareGrid2d<ObstacleData, SimpleGridObstacleDataCreator>(
+                gridSetting.MaxElementsPerSide.Item1,
                 position,
                 new Vector2(_bottomWallRenderer.bounds.size.x, _bottomWallRenderer.bounds.size.z),
-                new SimpleGridObstacleDataCreator(MaxHeight, MinHeight));//todo get max height in SO
+                new SimpleGridObstacleDataCreator(gridSetting));
             _squareGrid2d.CreateElements();
         }
 
@@ -108,32 +94,17 @@ namespace Behaviors
                 var index = i;//optionally use to mark obstacles
 
                 (Bounds? desiredBoundsBottom, Bounds? desiredBoundsTop) = obstacleData.GetBounds();
-
+                
                 GameObject obstacleBottom = PlaceObstacleRelativeToWall(_bottomWall.transform, desiredBoundsBottom, ref obstacleNumber);
                 GameObject obstacleTop = PlaceObstacleRelativeToWall(_topWall.transform, desiredBoundsTop, ref obstacleNumber);
 
                 SetGap(obstacleData, obstacleTop, obstacleBottom, index, desiredBoundsTop, ref gapNumber);
             }
             
-            SetDelayedActivation(_obstacles, obstacleNumber);
-            SetDelayedActivation(_gaps, gapNumber);
             DeactivateUnused(_obstacles, obstacleNumber);
             DeactivateUnused(_gaps, gapNumber);
         }
 
-        private void SetDelayedActivation(IList<GameObject> gameObjects, int endIndex)
-        {
-            for (int i = 0; i < endIndex; i++)
-            {
-                if (i < gameObjects.Count == false)
-                {
-                    break;
-                }
-
-                SetDelayedActivation(gameObjects[i]);
-            }
-        }
-        
         private void DeactivateUnused(IList<GameObject> gameObjects, int startIndex)
         {
             //up to start index set delayed activation
@@ -149,7 +120,9 @@ namespace Behaviors
             if (desiredBounds.HasValue)
             {
                 bool canBePooled = obstacleNumber < _obstacles.Count;
-                obstacle = canBePooled ? _obstacles[obstacleNumber] : GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                obstacle = canBePooled
+                    ? _obstacles[obstacleNumber]
+                    : GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 if (canBePooled == false)
                 {
                     _obstacles.Add(obstacle);
@@ -157,48 +130,39 @@ namespace Behaviors
 
                 var obstacleTransform = obstacle.transform;
                 obstacleTransform.localScale = Vector3.one;
-                var currentBoundsSizeBottom = obstacle.GetComponent<Renderer>()?.bounds.size?? Vector3.zero;
-                var scaleToFitBoundsBottom = new Vector3((desiredBounds.Value.size.x * ObstacleBoundsReductionMultiplier) / currentBoundsSizeBottom.x,
-                    desiredBounds.Value.size.y / currentBoundsSizeBottom.y, (desiredBounds.Value.size.z * ObstacleBoundsReductionMultiplier) / currentBoundsSizeBottom.z);
+                var currentBoundsSizeBottom = obstacle.GetComponent<Renderer>()?.bounds.size ?? Vector3.zero;
+                var scaleToFitBoundsBottom = new Vector3(
+                    (desiredBounds.Value.size.x * ObstacleBoundsReductionMultiplier) / currentBoundsSizeBottom.x,
+                    desiredBounds.Value.size.y / currentBoundsSizeBottom.y,
+                    (desiredBounds.Value.size.z * ObstacleBoundsReductionMultiplier) / currentBoundsSizeBottom.z);
 
                 obstacleTransform.localScale = scaleToFitBoundsBottom;
-                obstacleTransform.SetParent(wallParent);
-                obstacleTransform.position = new Vector3(desiredBounds.Value.center.x, desiredBounds.Value.center.y, desiredBounds.Value.center.z);
-
-                //SetDelayedActivation(obstacle);
+                obstacleTransform.position = new Vector3(desiredBounds.Value.center.x, desiredBounds.Value.center.y,
+                    desiredBounds.Value.center.z);
+                obstacleTransform.SetParent(wallParent, true);
 
                 if (obstacle.GetComponent<BoxCollider>() == false)
                 {
                     obstacle.AddComponent<BoxCollider>();
                 }
-                
+
+                if (obstacle.GetComponent<CapsuleCollider>() is
+                    { } capsuleCollider) //temp work around, I don't need this on primitives is by default
+                {
+                    capsuleCollider.enabled = false;
+                }
+
                 obstacle.GetComponent<BoxCollider>().OnTriggerEnterAsObservable().Subscribe(
                     c =>
                     {
                         Debug.Log($"Collided {c.tag} with obstacle");
                         _stateChannel.RaiseOnGameOver();
                     }).AddTo(this);
+                obstacle.SetActive(true);
                 obstacleNumber++;
             }
 
             return obstacle;
-        }
-
-        private void SetDelayedActivation(GameObject obstacle)
-        {
-            if (transform.position != Vector3.zero)
-            {
-                obstacle.SetActive(true);
-            }
-            else
-            {
-                obstacle.SetActive(false);
-                var onFirstSegmentRepositioned = Observable.FromEvent(
-                    _ => _delayedObstaclesActivation += _,
-                    _ => _delayedObstaclesActivation -= _
-                );
-                onFirstSegmentRepositioned.Subscribe(v => obstacle.SetActive(true));
-            }
         }
 
         private void SetGap(ObstacleData obstacleData, GameObject obstacleTop, GameObject obstacleBottom, int index,
@@ -232,19 +196,17 @@ namespace Behaviors
             gapCollider.size =
                 new Vector3(
                     desiredBounds.Value.size.x,
-                    _gapSize * 2,//todo * 2 is temporary until more precise sizing of the gap and upper and lower part
+                    obstacleData.GapSize,
                     desiredBounds.Value.size.z
                     );
             
-            //SetDelayedActivation(gap);
             //gapCollider.OnEnableAsObservable() use with reactive property to subscribe to events???
             gapCollider.OnTriggerExitAsObservable().Subscribe(c =>
             {
                 //todo use later to give specific amount of points based on Obstacle SO settings, the obstacle will be instantiated and set component instead of temp cylinders and gaps
-                Debug.Log($"Triggered with {c.tag}, on gap index: {index}");
                 _scoreUpdateChannel.RaiseEvent(new GapScore());
             }).AddTo(this);
-            
+            gap.SetActive(true);
             gapNumber++;
         }
 
