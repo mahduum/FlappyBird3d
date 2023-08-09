@@ -24,6 +24,8 @@ namespace Behaviors
 
         private readonly List<GameObject> _obstacles = new();
         private readonly List<GameObject> _gaps = new();
+
+        private readonly List<BoxCollider> _onGridColliders = new();
         
         public int? Index { get; private set; }
 
@@ -49,7 +51,28 @@ namespace Behaviors
             _bottomWall.OnTriggerEnterAsObservable().Subscribe(_ => _stateChannel.RaiseOnGameOver()).AddTo(this);
             _leftWall.OnTriggerEnterAsObservable().Subscribe(_ => _stateChannel.RaiseOnGameOver()).AddTo(this);
             _rightWall.OnTriggerEnterAsObservable().Subscribe(_ => _stateChannel.RaiseOnGameOver()).AddTo(this);
-            _boxCollider.OnTriggerExitAsObservable().Skip(1).Subscribe(_ => _segmentUpdateChannel.RaiseEvent()).AddTo(this);
+            _boxCollider.OnTriggerExitAsObservable().Subscribe(c =>
+            {
+                if (c.CompareTag("Player") == false)
+                {
+                    return;
+                }
+                
+                _segmentUpdateChannel.RaiseEvent();
+                foreach (var col in _onGridColliders)
+                {
+                    col.enabled = false;
+                }   
+            }).AddTo(this);
+            
+            _boxCollider.OnTriggerEnterAsObservable().Subscribe(_ =>
+            {
+                _segmentUpdateChannel.RaiseEvent();
+                foreach (var col in _onGridColliders)
+                {
+                    col.enabled = true;
+                }   
+            }).AddTo(this);
         }
 
         public void Set(int index)
@@ -57,13 +80,6 @@ namespace Behaviors
             Index = index;
             InitializeGrid();
             PlaceObstacles();
-        }
-
-        //todo activate colliders on segment collider enter, disable all far away segments
-        
-        private void OnTriggerExit(Collider other)//increment the number of surpassed segments
-        {
-            //_segmentUpdateChannel.RaiseEvent();
         }
 
         private void InitializeGrid()
@@ -141,16 +157,19 @@ namespace Behaviors
                 obstacleTransform.position = new Vector3(desiredBounds.Value.center.x, desiredBounds.Value.center.y,
                     desiredBounds.Value.center.z);
                 obstacleTransform.SetParent(wallParent, true);
-
+                
                 if (obstacle.GetComponent<BoxCollider>() == false)
                 {
-                    obstacle.AddComponent<BoxCollider>();//TODO ADD ALL COLLIDERS TO ACTIVATE DEACTIVATE LIST ON PLAYER ENTERING THE SEGMENT!!!
-                    obstacle.GetComponent<BoxCollider>().OnTriggerEnterAsObservable().Subscribe(
+                    var boxCollider = obstacle.AddComponent<BoxCollider>();//TODO ADD ALL COLLIDERS TO ACTIVATE DEACTIVATE LIST ON PLAYER ENTERING THE SEGMENT!!!
+                    boxCollider.OnTriggerEnterAsObservable().Subscribe(
                         c =>
                         {
                             Debug.Log($"Collided {c.tag} with obstacle");
                             _stateChannel.RaiseOnGameOver();
                         }).AddTo(this);
+
+                    boxCollider.enabled = false;
+                    _onGridColliders.Add(obstacle.GetComponent<BoxCollider>());
                 }
 
                 if (obstacle.GetComponent<CapsuleCollider>() is
@@ -190,15 +209,19 @@ namespace Behaviors
 
             if (gap.GetComponent<BoxCollider>() == false)
             {
-                gap.AddComponent<BoxCollider>();
-                gap.GetComponent<BoxCollider>().OnTriggerExitAsObservable().Subscribe(c =>
+                var boxCollider = gap.AddComponent<BoxCollider>();
+                boxCollider.OnTriggerExitAsObservable().Subscribe(c =>
                 {
                     //todo use later to give specific amount of points based on Obstacle SO settings, the obstacle will be instantiated and set component instead of temp cylinders and gaps
                     _scoreUpdateChannel.RaiseEvent(new GapScore());
                 }).AddTo(this);
+
+                boxCollider.enabled = false;
+                _onGridColliders.Add(boxCollider);
             }
             
             var gapCollider = gap.GetComponent<BoxCollider>();
+            gapCollider.enabled = false;
             gapCollider.size =
                 new Vector3(
                     desiredBounds.Value.size.x,

@@ -24,7 +24,7 @@ MonoBehaviour:
   - 0.15
   ObstacleMaxHeightLimits:
   - 0
-  - 0.3
+  - 0.5
   - 0.4
   - 0.45
   - 0.5

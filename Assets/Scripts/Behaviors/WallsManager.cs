@@ -24,13 +24,11 @@ namespace Behaviors
 
         private void Awake()
         {
-            _segmentUpdateChannel.OnSegmentExit += UpdateSegmentsPosition;
             _stateChannel.OnReset += ResetSegmentsPosition;
         }
 
         private void OnDestroy()
         {
-            _segmentUpdateChannel.OnSegmentExit -= UpdateSegmentsPosition;
             _stateChannel.OnReset -= ResetSegmentsPosition;
         }
 
@@ -45,7 +43,7 @@ namespace Behaviors
             Gizmos.DrawLine(transform.position, SpawningDirection * DepthBound);
         }
 
-        private void UpdateSegmentsPosition()
+        public void UpdateSegmentsPosition()
         {
             var first = _wallCompositePool[0];
             var last = _wallCompositePool[^1];

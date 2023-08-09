@@ -87,6 +87,7 @@ namespace Behaviors
     public class Flight : StateBase
     {
         private IDisposable _segmentUpdate;
+        private IDisposable _segmentUpdate2;
 
         public Flight(GameplayManager gameplayManager) : base(gameplayManager)
         {
@@ -112,6 +113,13 @@ namespace Behaviors
                     }
                     
                 }).AddTo(GameplayManager);
+
+            _segmentUpdate2 =
+                currentSegment
+                    .Skip(2)
+                    .Subscribe(_ => 
+                        GameplayManager.WallsManager.UpdateSegmentsPosition())
+                    .AddTo(GameplayManager);
         }
 
         public override void PauseGame()
@@ -128,6 +136,7 @@ namespace Behaviors
         {
             GameplayManager.SegmentUpdateChannel.OnSegmentExit -= IncrementSurpassedSegmentsCount;
             _segmentUpdate.Dispose();
+            _segmentUpdate2.Dispose();
         }
     }
 

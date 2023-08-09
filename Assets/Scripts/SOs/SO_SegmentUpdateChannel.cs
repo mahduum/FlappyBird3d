@@ -9,7 +9,7 @@ namespace SOs
         public UnityAction OnSegmentExit;
         public void RaiseEvent()
         {
-            OnSegmentExit.Invoke();
+            OnSegmentExit?.Invoke();
         }
     }
 }

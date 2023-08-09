@@ -13,12 +13,14 @@ namespace Behaviors
         [SerializeField] private SO_SpeedThresholds _speedThresholds;
         [SerializeField] private GameObject _gameOver;
         [SerializeField] private GameObject _gamePaused;
+        [SerializeField] private WallsManager _wallsManager;
 
         public SO_StateChannel StateChannel => _stateChannel;
         public SO_SegmentUpdateChannel SegmentUpdateChannel => _segmentUpdateChannel;
         public SO_SpeedThresholds SpeedThresholds => _speedThresholds;
         public GameObject GameOver => _gameOver;
         public GameObject GamePaused => _gamePaused;
+        public WallsManager WallsManager => _wallsManager;
 
         public static IntReactiveProperty CurrentSegment = new();
         //public IReadOnlyReactiveProperty<int> CurrentSegment => _currentSegment;
