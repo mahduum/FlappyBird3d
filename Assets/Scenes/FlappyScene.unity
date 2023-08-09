@@ -1568,6 +1568,7 @@ MonoBehaviour:
   _playerRigidBody: {fileID: 1167892123}
   _maxLateralSpeed: 20
   _upwardForce: 200
+  _input: {fileID: 1031317042}
 --- !u!1 &1059725152
 GameObject:
   m_ObjectHideFlags: 0
@@ -2884,7 +2885,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 521b7aa2ec822a343b1e49f96a502081, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _gameplayManager: {fileID: 0}
   _playerController: {fileID: 1031317046}
   _visibleUnitsNumber: 9
   _unitRenderer: {fileID: 1256368836}

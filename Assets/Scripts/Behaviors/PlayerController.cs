@@ -12,6 +12,7 @@ namespace Behaviors
         [SerializeField] private Rigidbody _playerRigidBody;
         [SerializeField] private float _maxLateralSpeed = 20.0f;
         [SerializeField] private float _upwardForce = 100.0f;
+        [SerializeField] private PlayerInput _input;
 
         // Moves the root forward but the player inside the root moves independently, but cannot move forward (or can move 
         // within the limits of the root
@@ -39,6 +40,7 @@ namespace Behaviors
         private void Reset()
         {
             _forwardSpeed = 0;
+            _input.enabled = false;
             _playerRigidBody.useGravity = false;
             _playerRigidBody.velocity = Vector3.zero;
             transform.position = Vector3.zero;
@@ -79,6 +81,7 @@ namespace Behaviors
         {
             _forwardSpeed = currentSpeed;
             _playerRigidBody.useGravity = _forwardSpeed > 0;
+            _input.enabled = _forwardSpeed > 0;
         }
 
         private void OnReset()
