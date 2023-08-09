@@ -44,6 +44,12 @@ namespace Behaviors
             _boxCollider.center = Vector3.zero;
             _boxCollider.size = new Vector3(_topWallRenderer.bounds.size.x,
                 Vector3.Distance(_topWallRenderer.transform.position, _bottomWallRenderer.transform.position), _topWallRenderer.bounds.size.z);
+            
+            _topWall.OnTriggerEnterAsObservable().Subscribe(_ => _stateChannel.RaiseOnGameOver()).AddTo(this);
+            _bottomWall.OnTriggerEnterAsObservable().Subscribe(_ => _stateChannel.RaiseOnGameOver()).AddTo(this);
+            _leftWall.OnTriggerEnterAsObservable().Subscribe(_ => _stateChannel.RaiseOnGameOver()).AddTo(this);
+            _rightWall.OnTriggerEnterAsObservable().Subscribe(_ => _stateChannel.RaiseOnGameOver()).AddTo(this);
+            _boxCollider.OnTriggerExitAsObservable().Skip(1).Subscribe(_ => _segmentUpdateChannel.RaiseEvent()).AddTo(this);
         }
 
         public void Set(int index)
@@ -57,7 +63,7 @@ namespace Behaviors
         
         private void OnTriggerExit(Collider other)//increment the number of surpassed segments
         {
-            _segmentUpdateChannel.RaiseEvent();
+            //_segmentUpdateChannel.RaiseEvent();
         }
 
         private void InitializeGrid()
@@ -77,12 +83,7 @@ namespace Behaviors
         {
             int obstacleNumber = 0;
             int gapNumber = 0;
-            
-            _topWall.OnTriggerEnterAsObservable().Take(1).Subscribe(_ => _stateChannel.RaiseOnGameOver()).AddTo(this);//todo take until state is set or changed
-            _bottomWall.OnTriggerEnterAsObservable().Take(1).Subscribe(_ => _stateChannel.RaiseOnGameOver()).AddTo(this);
-            // _leftWall.OnTriggerEnterAsObservable().Subscribe(_ => _stateChannel.RaiseOnGameOver()).AddTo(this);
-            // _rightWall.OnTriggerEnterAsObservable().Subscribe(_ => _stateChannel.RaiseOnGameOver()).AddTo(this);
-            
+
             for (int i = 0; i < _squareGrid2d.Elements.Length; i++)
             {
                 var obstacleData = _squareGrid2d.Elements[i];
@@ -143,7 +144,13 @@ namespace Behaviors
 
                 if (obstacle.GetComponent<BoxCollider>() == false)
                 {
-                    obstacle.AddComponent<BoxCollider>();
+                    obstacle.AddComponent<BoxCollider>();//TODO ADD ALL COLLIDERS TO ACTIVATE DEACTIVATE LIST ON PLAYER ENTERING THE SEGMENT!!!
+                    obstacle.GetComponent<BoxCollider>().OnTriggerEnterAsObservable().Subscribe(
+                        c =>
+                        {
+                            Debug.Log($"Collided {c.tag} with obstacle");
+                            _stateChannel.RaiseOnGameOver();
+                        }).AddTo(this);
                 }
 
                 if (obstacle.GetComponent<CapsuleCollider>() is
@@ -151,13 +158,7 @@ namespace Behaviors
                 {
                     capsuleCollider.enabled = false;
                 }
-
-                obstacle.GetComponent<BoxCollider>().OnTriggerEnterAsObservable().Subscribe(
-                    c =>
-                    {
-                        Debug.Log($"Collided {c.tag} with obstacle");
-                        _stateChannel.RaiseOnGameOver();
-                    }).AddTo(this);
+                
                 obstacle.SetActive(true);
                 obstacleNumber++;
             }
@@ -190,6 +191,11 @@ namespace Behaviors
             if (gap.GetComponent<BoxCollider>() == false)
             {
                 gap.AddComponent<BoxCollider>();
+                gap.GetComponent<BoxCollider>().OnTriggerExitAsObservable().Subscribe(c =>
+                {
+                    //todo use later to give specific amount of points based on Obstacle SO settings, the obstacle will be instantiated and set component instead of temp cylinders and gaps
+                    _scoreUpdateChannel.RaiseEvent(new GapScore());
+                }).AddTo(this);
             }
             
             var gapCollider = gap.GetComponent<BoxCollider>();
@@ -201,11 +207,6 @@ namespace Behaviors
                     );
             
             //gapCollider.OnEnableAsObservable() use with reactive property to subscribe to events???
-            gapCollider.OnTriggerExitAsObservable().Subscribe(c =>
-            {
-                //todo use later to give specific amount of points based on Obstacle SO settings, the obstacle will be instantiated and set component instead of temp cylinders and gaps
-                _scoreUpdateChannel.RaiseEvent(new GapScore());
-            }).AddTo(this);
             gap.SetActive(true);
             gapNumber++;
         }
