@@ -11,17 +11,14 @@ namespace Behaviors
         [SerializeField] private Transform _player;
         [SerializeField] private Rigidbody _playerRigidBody;
         [SerializeField] private float _maxLateralSpeed = 20.0f;
-        [SerializeField] private float _upwardForce = 100.0f;
+        [SerializeField] private float _upwardForce = 10.0f;
         [SerializeField] private PlayerInput _input;
 
-        // Moves the root forward but the player inside the root moves independently, but cannot move forward (or can move 
-        // within the limits of the root
-        private float _forwardSpeed = 1.0f;//from SO
-        private float _lateralDirection = 0;
+        private float _forwardSpeed;
+        private float _lateralDirection;
 
         private void Awake()
         {
-            //create another input controller here later???
             _stateChannel.OnSpeedChanged += OnSpeedChanged;
             _stateChannel.OnReset += OnReset;
         }
@@ -43,12 +40,12 @@ namespace Behaviors
             _input.enabled = false;
             _playerRigidBody.useGravity = false;
             _playerRigidBody.velocity = Vector3.zero;
+            _playerRigidBody.Sleep();
             transform.position = Vector3.zero;
             transform.rotation = _player.rotation = Quaternion.identity;
             _player.position = Vector3.zero;
         }
-
-        // Update is called once per frame
+        
         void Update()
         {
             var translationZ = transform.forward * (_forwardSpeed * Time.deltaTime);
@@ -74,6 +71,27 @@ namespace Behaviors
             }
 
             _lateralDirection = vector.x;
+        }
+
+        [UsedImplicitly]
+        public void LateralMovement(InputAction.CallbackContext context)
+        {
+            if (context.action.phase == InputActionPhase.Canceled)
+            {
+                _lateralDirection = 0;
+            }
+            
+            var vector = context.action.ReadValue<Vector2>();
+            _lateralDirection = vector.x;
+        }
+
+        [UsedImplicitly]
+        public void Jump(InputAction.CallbackContext context)
+        {
+            if (context.phase == InputActionPhase.Performed)
+            {
+                _playerRigidBody.AddForce(Vector3.up * _upwardForce);
+            }
         }
 
         [UsedImplicitly]

@@ -10,6 +10,7 @@ namespace SOs
         public UnityAction OnGameOver;
         public UnityAction<int> OnCountdown;
         public UnityAction OnReset;
+        public UnityAction<bool> OnPaused;
 
         public void RaiseOnSpeedChanged(float currentSpeed)
         {
@@ -29,6 +30,11 @@ namespace SOs
         public void RaiseOnReset()
         {
             OnReset?.Invoke();
+        }
+
+        public void RaiseOnPaused(bool isPaused)
+        {
+            OnPaused?.Invoke(isPaused);
         }
     }
 }

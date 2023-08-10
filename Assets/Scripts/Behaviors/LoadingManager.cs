@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using SOs;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -10,7 +11,9 @@ namespace Behaviors
     public class LoadingManager : MonoBehaviour
     {
         [SerializeField] private Camera _splashCamera;
+        [SerializeField] private SO_StateChannel _soStateChannel;
         private static LoadingManager _instance;
+        private bool _isPaused;
         
         public static LoadingManager Instance
         {
@@ -55,6 +58,18 @@ namespace Behaviors
         public static async UniTask LoadMainMenuAsSingleScene()
         { 
             await SceneManager.LoadSceneAsync("MainMenu", LoadSceneMode.Single);
+        }
+        
+        void OnApplicationFocus(bool hasFocus)
+        {
+            _isPaused = !hasFocus;
+            _soStateChannel.RaiseOnPaused(_isPaused);
+        }
+
+        void OnApplicationPause(bool pauseStatus)
+        {
+            _isPaused = pauseStatus;
+            _soStateChannel.RaiseOnPaused(_isPaused);
         }
     }
 }

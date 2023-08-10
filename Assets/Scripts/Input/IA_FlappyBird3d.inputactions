@@ -22,6 +22,24 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "LateralMovementTouchScreen",
+                    "type": "Value",
+                    "id": "a72cc132-66cc-46a5-92dc-11e638fc6995",
+                    "expectedControlType": "Delta",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "JumpTouchScreen",
+                    "type": "Button",
+                    "id": "85ba52c1-62c0-4c81-aad1-7b5727f2d3e0",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "Tap(duration=0.05),Press(behavior=2)",
+                    "initialStateCheck": true
                 }
             ],
             "bindings": [
@@ -88,6 +106,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "GamePause",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "0ccb05cf-5c7d-4681-af1f-4ac0ddc82196",
+                    "path": "<Touchscreen>/primaryTouch/delta",
+                    "interactions": "Hold(duration=0.1),Press",
+                    "processors": "NormalizeVector2",
+                    "groups": "",
+                    "action": "LateralMovementTouchScreen",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8ac4be10-1388-4250-8002-0de85ad0a955",
+                    "path": "<Touchscreen>/touch*/Press",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "JumpTouchScreen",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

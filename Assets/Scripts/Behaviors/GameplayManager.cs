@@ -51,11 +51,13 @@ namespace Behaviors
         private void Awake()
         {
             _stateChannel.OnGameOver += OnGameOver;
+            _stateChannel.OnPaused += OnPaused;
         }
 
         private void OnDestroy()
         {
             _stateChannel.OnGameOver -= OnGameOver;
+            _stateChannel.OnPaused -= OnPaused;
         }
 
         void Start()
@@ -93,6 +95,14 @@ namespace Behaviors
         public void OnClickRetry()
         {
             State.ResumeGame();
+        }
+
+        private void OnPaused(bool isPaused)
+        {
+            if (isPaused)
+            {
+                State.PauseGame();
+            }
         }
     }
 }

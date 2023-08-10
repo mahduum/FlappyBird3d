@@ -31,9 +31,7 @@ namespace Behaviors
 
         private WallsManager _owner;
         private WallsManager Owner =>_owner ??= GetComponentInParent<WallsManager>();
-
-        // Start is called before the first frame update
-        // Based on index augment score on thresholds
+        
         [Range(0, 99)]
         [SerializeField] private int _obstacleBoundsReductionPercent = 10;
         
@@ -160,11 +158,10 @@ namespace Behaviors
                 
                 if (obstacle.GetComponent<BoxCollider>() == false)
                 {
-                    var boxCollider = obstacle.AddComponent<BoxCollider>();//TODO ADD ALL COLLIDERS TO ACTIVATE DEACTIVATE LIST ON PLAYER ENTERING THE SEGMENT!!!
+                    var boxCollider = obstacle.AddComponent<BoxCollider>();
                     boxCollider.OnTriggerEnterAsObservable().Subscribe(
                         c =>
                         {
-                            Debug.Log($"Collided {c.tag} with obstacle");
                             _stateChannel.RaiseOnGameOver();
                         }).AddTo(this);
 
