@@ -1,9 +1,8 @@
-using System;
-using JetBrains.Annotations;
 using SOs;
 using TMPro;
 using UniRx;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Utilities.Scores;
 
 namespace Behaviors
@@ -16,27 +15,26 @@ namespace Behaviors
         [SerializeField] private TextMeshProUGUI _timeScoreText;//emit every second until reactive property in play is active
         [SerializeField] private TextMeshProUGUI _gapScoreText;
         [SerializeField] private TextMeshProUGUI _bonusScoreText;
-        // Start is called before the first frame update
-        
-        //todo on game over event save the score
-        //todo on game start reset the score
+        [FormerlySerializedAs("_highScorePanel")] [SerializeField] private GameOverPanel _gameOverPanel;
 
-        private readonly IntReactiveProperty _gapScore = new IntReactiveProperty();
-        private readonly IntReactiveProperty _bonusScore = new IntReactiveProperty();
-        private readonly IntReactiveProperty _timeScore = new IntReactiveProperty();
+        private static readonly IntReactiveProperty GapScore = new IntReactiveProperty();
+        private static readonly IntReactiveProperty BonusScore = new IntReactiveProperty();
+        public static long CurrentTotalScore => GameplayManager.GameTimeSeconds.Value + GapScore.Value + BonusScore.Value;
 
         private void Awake()
         {
             _scoreUpdateChannel.OnScore += OnScore;
+            _stateChannel.OnReset += OnReset;
             _stateChannel.OnGameOver += OnGameOver;
-            _gapScore.DistinctUntilChanged().Subscribe(points => _gapScoreText.text = $"GAPS: {points}").AddTo(this);
-            _bonusScore.DistinctUntilChanged().Subscribe(points => _bonusScoreText.text = $"BONUS: {points}").AddTo(this);
-            _timeScore.DistinctUntilChanged().Subscribe(points => _timeScoreText.text = $"TIME: {points}").AddTo(this);
+            GapScore.DistinctUntilChanged().Subscribe(points => _gapScoreText.text = $"GAPS: {points}").AddTo(this);
+            BonusScore.DistinctUntilChanged().Subscribe(points => _bonusScoreText.text = $"BONUS: {points}").AddTo(this);
+            GameplayManager.GameTimeSeconds.DistinctUntilChanged().Subscribe(points => _timeScoreText.text = $"TIME: {points}").AddTo(this);
         }
 
         private void OnDestroy()
         {
             _scoreUpdateChannel.OnScore -= OnScore;
+            _stateChannel.OnReset -= OnReset;
             _stateChannel.OnGameOver -= OnGameOver;
         }
 
@@ -44,20 +42,22 @@ namespace Behaviors
         {
             if (score is GapScore { })
             {
-                _gapScore.Value += score.GetPoints;
+                GapScore.Value += score.GetPoints;
             }
             else if (score is BonusScore { })
             {
-                _bonusScore.Value += score.GetPoints;
+                BonusScore.Value += score.GetPoints;
             }
         }
 
-        public void OnGameOver()
+        private void OnGameOver()
         {
-            //todo first save the score, show the result, and then reset variables
-            _gapScore.Value = 0;
-            _bonusScore.Value = 0;
-            _timeScore.Value = 0;
+        }
+
+        public void OnReset()
+        {
+            GapScore.Value = 0;
+            BonusScore.Value = 0;
         }
     }
 }

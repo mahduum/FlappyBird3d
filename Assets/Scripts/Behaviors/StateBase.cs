@@ -16,11 +16,6 @@ namespace Behaviors
 
         public abstract void Start();
 
-        public virtual void KeepScore()
-        {
-            
-        }
-
         public virtual void PauseGame()
         {
         }
@@ -75,7 +70,12 @@ namespace Behaviors
             {
                 int displaySeconds = CountTo - (int)seconds;
                 GameplayManager.StateChannel.RaiseOnCountdown(displaySeconds);
-            }, () => GameplayManager.SetState(new Flight(GameplayManager))).AddTo(GameplayManager);
+            }, () =>
+                {
+                    GameplayManager.SetState(new Flight(GameplayManager));
+                    GameplayManager.SetGameTimeCounter();
+                })
+                .AddTo(GameplayManager);
         }
 
         protected override void DisposeInternal()
@@ -183,14 +183,15 @@ namespace Behaviors
         public override void Start()
         {
             Time.timeScale = 0;
-            GameplayManager.GameOver.SetActive(true);
+            GameplayManager.GameOver.gameObject.SetActive(true);
             GameplayManager.CurrentSegment.Value = 0;
-            //todo prompt saving and showing all the results
         }
 
         public override void ResumeGame()
         {
-            GameplayManager.GameOver.SetActive(false);
+            GameplayManager.GameTimeSeconds.Value = 0;
+            GameplayManager.ResetGameTimer();
+            GameplayManager.GameOver.gameObject.SetActive(false);
             GameplayManager.SetState(new Reset(GameplayManager));
             Time.timeScale = 1;
         }

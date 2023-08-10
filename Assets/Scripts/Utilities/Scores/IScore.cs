@@ -7,7 +7,7 @@
 
     public struct GapScore : IScore
     {
-        public int GetPoints => 1;//todo maybe make it dependable from gap size?
+        public int GetPoints => 10;//todo maybe make it dependable from gap size?
     }
     
     public struct BonusScore : IScore
