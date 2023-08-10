@@ -22,7 +22,7 @@ namespace Behaviors
         public GameObject GamePaused => _gamePaused;
         public WallsManager WallsManager => _wallsManager;
 
-        public static IntReactiveProperty CurrentSegment = new();
+        public static readonly IntReactiveProperty CurrentSegment = new();
         //public IReadOnlyReactiveProperty<int> CurrentSegment => _currentSegment;
 
         //todo use button start, but later switch it to timed start.
