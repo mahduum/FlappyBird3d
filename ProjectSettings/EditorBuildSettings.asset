@@ -15,4 +15,5 @@ EditorBuildSettings:
     path: Assets/Scenes/FlappyScene.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   m_configObjects:
+    com.unity.addressableassets: {fileID: 11400000, guid: 14050156a024b114196c406eb16465b7, type: 2}
     com.unity.input.settings: {fileID: 11400000, guid: ea2703a29d4b2e24f987ffe10cd72327, type: 2}

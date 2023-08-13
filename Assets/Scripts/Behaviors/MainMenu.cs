@@ -6,6 +6,8 @@ namespace Behaviors
 {
     public class MainMenu : MonoBehaviour
     {
+        [SerializeField] private GameObject _highScoresPanel;
+        
         [UsedImplicitly]
         public void OnClickPlayGame()
         {
@@ -16,7 +18,7 @@ namespace Behaviors
         [UsedImplicitly]
         public void OnClickHighScores()
         {
-        
+            _highScoresPanel.SetActive(true);
         }
 
         [UsedImplicitly]

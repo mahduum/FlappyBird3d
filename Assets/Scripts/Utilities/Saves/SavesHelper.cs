@@ -108,6 +108,7 @@ namespace Utilities.Saves
         {
             if (Directory.Exists(directoryPath) == false)
             {
+                Debug.Log("Directory does not exist!");
                 return UniTask.FromResult(Array.Empty<string>());
             }
             
@@ -115,6 +116,7 @@ namespace Utilities.Saves
 
             if (fileNames.Length < 1)
             {
+                Debug.Log("File does not exist!");
                 return UniTask.FromResult(Array.Empty<string>());
             }
             

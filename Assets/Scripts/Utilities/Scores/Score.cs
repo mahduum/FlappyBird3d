@@ -65,9 +65,9 @@ namespace Utilities.Scores
             return contents.Select(JsonUtility.FromJson<ScoreInfo>).ToArray();
         }
         
-        public static UniTask<ScoreInfo[]> LoadRecentScoresAsync(int maxCount)
+        public static UniTask<ScoreInfo[]> LoadRecentScoresAsync()
         {
-            var contents = SavesHelper.LoadMostRecentFilesAsync(SCORES_FOLDER_PATH, maxCount);
+            var contents = SavesHelper.LoadMostRecentFilesAsync(SCORES_FOLDER_PATH, CAPACITY);
             return contents.ContinueWith(c => c.Select(JsonUtility.FromJson<ScoreInfo>).ToArray());
         }
 
