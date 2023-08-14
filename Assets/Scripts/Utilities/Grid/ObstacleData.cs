@@ -30,9 +30,9 @@ namespace Utilities.Grid
         public float TopSegmentHeight { get; set; }
         public ObstacleType Type { get; set; }
         public bool HasGap => GapSize > 0;
-        public float GapSize { get; set; }
+        public float GapSize { get; set; }//or total height minus bottom minus top
 
-        public (Bounds? bottomSegmentBounds, Bounds? topSegmentBounds) GetBounds()
+        public (Bounds? bottomSegmentBounds, Bounds? topSegmentBounds, Bounds? middleSegmentBounds) GetBounds()//cache this
         {
             (int row, int column) = Owner.GetRowAndColumnFromIndex(Index);
             var worldPositionNoYOffset = Owner.GetCellWorldPositionNoYOffset(row, column);
@@ -51,7 +51,19 @@ namespace Utilities.Grid
                 top = new Bounds(center, new Vector3(Owner.CellSize.x, TopSegmentHeight, Owner.CellSize.y));
             }
 
-            return (bottom, top);
+            Bounds? middle = null;
+            if (bottom.HasValue && top.HasValue)
+            {
+                var bottomTopY = bottom.Value.center.y + bottom.Value.extents.y;
+                var topBottomY = top.Value.center.y - top.Value.extents.y;
+                var middleSegmentCenterY = Mathf.Lerp(bottomTopY, topBottomY, 0.5f);
+                var center = new Vector3(worldPositionNoYOffset.x, middleSegmentCenterY, worldPositionNoYOffset.z);
+                middle = new Bounds(center, new Vector3(Owner.CellSize.x, GapSize, Owner.CellSize.y));
+                //or:
+                //var YCoord = -Owner.AbsYOffset + BottomSegmentHeight + GapSize / 2;
+            }
+
+            return (bottom, top, middle);
         }
     }
 }

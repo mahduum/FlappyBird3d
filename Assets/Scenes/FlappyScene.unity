@@ -2405,7 +2405,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 10302, guid: 0000000000000000f000000000000000, type: 0}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4420,7 +4420,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &2080227849
 Transform:
   m_ObjectHideFlags: 0
@@ -4462,6 +4462,8 @@ MonoBehaviour:
   _bottomWall: {fileID: 137642495}
   _leftWall: {fileID: 419317776}
   _rightWall: {fileID: 1324488452}
+  _basicObstacleTemplate: {fileID: 7825371834159817803, guid: 7558d56b94d38414bbaf94447a60b385, type: 3}
+  _basicGapTemplate: {fileID: 1749301171998879093, guid: a1a83860bd90fca4c928d9ff5f444f6d, type: 3}
   _obstacleBoundsReductionPercent: 10
 --- !u!65 &2080227851
 BoxCollider:
