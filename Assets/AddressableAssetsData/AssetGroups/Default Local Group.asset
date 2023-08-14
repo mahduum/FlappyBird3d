@@ -22,6 +22,41 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4392801442244b44790f14c891c8a03a
+    m_Address: Assets/Prefabs/WallTemplate.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a1a83860bd90fca4c928d9ff5f444f6d
+    m_Address: Assets/Prefabs/GapZone.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7558d56b94d38414bbaf94447a60b385
+    m_Address: Assets/Prefabs/BasicTubeObstacle.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4b429e13a25080a4d9ea6490a04768ac
+    m_Address: Assets/Scripts/Shaders/M_Stippling.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 19f9c0d7dd2852743bf2681e5eee314c
+    m_Address: Assets/Scripts/Shaders/M_Transparency.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cce4a6884d5ecbb4dbbaf010b9f5bc36
+    m_Address: Assets/Scripts/Shaders/Stippling.shader
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 051d01a338acbe74cb7badf1a95c0361
+    m_Address: Assets/Scripts/Shaders/Transparency.shader
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 064447d43dbeb8d47af269bd61895067, type: 2}
   m_SchemaSet:

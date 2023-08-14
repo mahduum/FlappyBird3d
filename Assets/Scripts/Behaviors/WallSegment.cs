@@ -29,6 +29,8 @@ namespace Behaviors
 
         private readonly HashSet<BoxCollider> _onGridColliders = new();
         
+        public Renderer UnitRenderer => _topWallRenderer;
+        
         public int? Index { get; private set; }
 
         private WallsManager _owner;

@@ -1,6 +1,9 @@
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using SOs;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.Serialization;
 using Utilities.Grid;
 
@@ -10,17 +13,31 @@ namespace Behaviors
     {
         [SerializeField] private PlayerController _playerController;
         [SerializeField] private int _visibleUnitsNumber;
-        [SerializeField] private Renderer _unitRenderer;
         [SerializeField] private GameObject _wallCompositeTemplate;
-        [SerializeField] private SO_SegmentUpdateChannel _segmentUpdateChannel;
+        [SerializeField] private AssetReferenceGameObject _wallCompositeAssetRef;
         [SerializeField] private SO_StateChannel _stateChannel;
         [FormerlySerializedAs("_gridObstacleSettings")] [SerializeField] private SO_GridObstacleSettings _SO_GridObstacleSettings;
-    
+
+        private List<AsyncOperationHandle<GameObject>> _wallCompositeHandles = new();
         //todo add side walls, so obstacles but heating up the player or can have sudden wind gusts
         private Vector3 SpawningDirection => _playerController.transform.forward;
-        private float DepthBound => _unitRenderer.bounds.size.z;
+        private float DepthBound
+        {
+            get
+            {
+                if (WallSegment)
+                {
+                    return WallSegment.UnitRenderer.bounds.size.z;
+                }
+
+                return 100.0f;
+            }
+        }
+
         private readonly List<WallSegment> _wallCompositePool = new();
         private readonly List<GridElementsSetting> _wallSegmentGridSettings = new();
+
+        private WallSegment WallSegment => _wallCompositePool.Count > 0 ? _wallCompositePool[0] : null;
 
         private void Awake()
         {
@@ -53,7 +70,7 @@ namespace Behaviors
             first.Set(last.Index.GetValueOrDefault() + 1);
         }
 
-        private void InstantiateSegments()
+        private async void InstantiateSegments()
         {
             if (_wallCompositePool.Count == _visibleUnitsNumber)
             {
@@ -65,11 +82,20 @@ namespace Behaviors
                 ? _wallCompositePool[^1].transform.position
                 : transform.position;
 
+            var wallCompositeHandle = _wallCompositeAssetRef.LoadAssetAsync<GameObject>();
+            _wallCompositeHandles.Add(wallCompositeHandle);
+            await wallCompositeHandle.ToUniTask();
+
             for (int i = 0; i < segmentsToSpawn; i++)
             {
+                if (wallCompositeHandle.Status != AsyncOperationStatus.Succeeded || wallCompositeHandle.Result == null)
+                {
+                    break;
+                }
+                
                 var spawned =
                     Instantiate(_wallCompositeTemplate, _wallCompositePool.Count > 0 ? OffsetPosition(position) : position, Quaternion.identity,
-                        transform); //todo remember to use addressables with obstacles, as addressable reference
+                        transform);
                 position = spawned.transform.position;
                 if (spawned.GetComponent<WallSegment>() is { } segment)
                 {
@@ -78,8 +104,10 @@ namespace Behaviors
                 }
                 spawned.SetActive(true);
             }
+            
+            Addressables.Release(wallCompositeHandle);
         
-            if (_wallCompositePool.Count > 1)
+            if (_wallCompositePool.Count > 1)//sort when is done
             {
                 _wallCompositePool.Sort((a, b) => (int)((a.transform.position.z - b.transform.position.z) * 1000.0f));//todo change to queue then the sorting won't be needed
             }
