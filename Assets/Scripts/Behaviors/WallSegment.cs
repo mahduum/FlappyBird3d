@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using SOs;
 using UniRx;
 using UniRx.Triggers;
 using UnityEngine;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.Serialization;
 using Utilities.Grid;
 using Utilities.Scores;
@@ -34,7 +36,7 @@ namespace Behaviors
         public int? Index { get; private set; }
 
         private WallsManager _owner;
-        private WallsManager Owner =>_owner ??= GetComponentInParent<WallsManager>();
+        private WallsManager Owner => _owner ??= GetComponentInParent<WallsManager>();
         
         [Range(0, 99)]
         [SerializeField] private int _obstacleBoundsReductionPercent = 10;
@@ -43,14 +45,19 @@ namespace Behaviors
 
         private SquareGrid2d<ObstacleData, SimpleGridObstacleDataCreator> _squareGrid2d;
 
-        private GameObject GetObstacleGameObject()
+        private GameObject InstantiateObstacleElement(WallsManager.ObstacleElementType obstacleElementType, Transform parent = null)
         {
-            if (_basicObstacleTemplate != null)
+            if (Owner.AllObstacleElementsTask.Status != UniTaskStatus.Succeeded)
             {
-                return _basicObstacleTemplate;
+                Debug.LogError("All obstacle element assets should be loaded before instantiation inside wall segment!");
+            }
+            else if (Owner.ObstacleElementHandles.TryGetValue(obstacleElementType, out var handle) &&
+                     handle.Status == AsyncOperationStatus.Succeeded && handle.Result != null)
+            {
+                return Instantiate(handle.Result, parent == null ? transform : parent);
             }
 
-            return GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            return new GameObject("MISSING ASSET!!!");
         }
 
         private void Awake()
@@ -107,8 +114,11 @@ namespace Behaviors
             _squareGrid2d.CreateElements();
         }
 
-        private void PlaceObstacles()
+        private async void PlaceObstacles()
         {
+            //load all handles first, assure that grid has info about all types of obstacle assets to be loaded (todo):
+            await Owner.AllObstacleElementsTask;
+
             int obstacleNumber = 0;
             int gapNumber = 0;
 
@@ -151,7 +161,7 @@ namespace Behaviors
                 bool canBePooled = obstacleNumber < _obstacles.Count;
                 obstacle = canBePooled
                     ? _obstacles[obstacleNumber]
-                    : Instantiate(GetObstacleGameObject(), transform);
+                    : InstantiateObstacleElement(WallsManager.ObstacleElementType.BasicShaft, wallParent);//todo get element type from grid data?
                 if (canBePooled == false)
                 {
                     _obstacles.Add(obstacle);
@@ -214,7 +224,7 @@ namespace Behaviors
             }
 
             bool canBePooled = gapNumber < _gaps.Count;
-            var gap = canBePooled ? _gaps[gapNumber] : _basicGapTemplate != null ? Instantiate(_basicGapTemplate, transform) : new GameObject($"Gap_{index}"); //todo add special transparent material, make cache (gaps can have rewards on them
+            var gap = canBePooled ? _gaps[gapNumber] : InstantiateObstacleElement(WallsManager.ObstacleElementType.BasicGap);
 
             if (canBePooled == false)
             {

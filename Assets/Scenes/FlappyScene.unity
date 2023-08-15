@@ -3584,9 +3584,9 @@ MonoBehaviour:
     m_SubObjectName: 
     m_SubObjectType: 
     m_EditorAssetChanged: 0
-  _segmentUpdateChannel: {fileID: 11400000, guid: bf3614cf33e771745a03119b59a7fac3, type: 2}
   _stateChannel: {fileID: 11400000, guid: 666dc152b3f54c5448bf61ee5534c0a5, type: 2}
   _SO_GridObstacleSettings: {fileID: 11400000, guid: 4c300a0dea22c5a4689e3f9a86a29407, type: 2}
+  _SO_ObstacleElementAssetRefs: {fileID: 11400000, guid: 074be88ac261505448c2c3360a14050d, type: 2}
 --- !u!1 &1922259468
 GameObject:
   m_ObjectHideFlags: 0
