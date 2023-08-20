@@ -14,8 +14,6 @@ Shader "Custom/Transparency"
 
         CGPROGRAM
         #pragma surface surf Lambert alpha:fade
-
-        // Use shader model 3.0 target, to get nicer looking lighting
         #pragma target 3.0
 
         sampler2D _MainTex;
@@ -46,12 +44,10 @@ Shader "Custom/Transparency"
         
             half fade = saturate((dst/_FadeDst));
             fixed4 c = tex2D (_MainTex, IN.uv_MainTex);
+            
             o.Albedo =  c.rgb * _Color.rgb;
             o.Alpha = _Alpha;
             o.Alpha *= fade;
-
-            //stripes
-            //clip (frac((IN.worldPos.y + _Time.x + IN.worldPos.z * 0.1) * 5) - 0.5);
         }
         ENDCG
     }
