@@ -37,7 +37,7 @@ namespace Behaviors
                 currentSegment
                     .Skip(2)
                     .Subscribe(_ => 
-                        GameplayManager.WallsManager.UpdateSegmentsPosition())
+                        GameplayManager.WallsManager.UpdateSegmentsPosition())//todo add as dependency
                     .AddTo(GameplayManager);
         }
 

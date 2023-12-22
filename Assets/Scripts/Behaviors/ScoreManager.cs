@@ -38,7 +38,7 @@ namespace Behaviors
             _stateChannel.OnGameOver -= OnGameOver;
         }
 
-        private void OnScore(IScore score)
+        private void OnScore(IScore score)//todo add on signal from DI
         {
             if (score is GapScore { })
             {

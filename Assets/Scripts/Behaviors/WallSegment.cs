@@ -8,11 +8,20 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.Serialization;
 using Utilities.Grid;
 using Utilities.Scores;
+using Zenject;
 
 namespace Behaviors
 {
     public class WallSegment : MonoBehaviour
     {
+        //Zenject
+        [Inject]
+        public void Construct(int index)//todo also set position!!!
+        {
+            Index = index;
+        }
+        
+        //end
         [SerializeField] private BoxCollider _boxCollider;
         [FormerlySerializedAs("_topWall")] [SerializeField] private Renderer _topWallRenderer;
         [FormerlySerializedAs("_bottomWall")] [SerializeField] private Renderer _bottomWallRenderer;
@@ -33,10 +42,10 @@ namespace Behaviors
         
         public Renderer UnitRenderer => _topWallRenderer;
         
-        public int? Index { get; private set; }
+        public int? Index { get; private set; }//todo make it a wrapper type struct
 
         private WallsManager _owner;
-        private WallsManager Owner => _owner ??= GetComponentInParent<WallsManager>();
+        private WallsManager Owner => _owner ??= GetComponentInParent<WallsManager>();//todo this can be injected on spawn DI
         
         [Range(0, 99)]
         [SerializeField] private int _obstacleBoundsReductionPercent = 10;
@@ -104,14 +113,22 @@ namespace Behaviors
         private void InitializeGrid()
         {
             var gridSetting = Owner.GetOrCreateSegmentSettings(Index.GetValueOrDefault());
-            var position = _bottomWall.transform.position;
-            _squareGrid2d = null;
-            _squareGrid2d = new SquareGrid2d<ObstacleData, SimpleGridObstacleDataCreator>(
+            var position = _bottomWall.transform.position;//todo needs bottom wall for position
+            _squareGrid2d = null;//todo grid can be injected but must be defined how, and it needs index for settings
+            _squareGrid2d = new SquareGrid2d<ObstacleData, SimpleGridObstacleDataCreator>(//todo this should be a grid from factory DI, but it needs the index when the segment is being created
                 gridSetting.MaxElementsPerSide.Item1,
                 position,
                 new Vector2(_bottomWallRenderer.bounds.size.x, _bottomWallRenderer.bounds.size.z),
-                new SimpleGridObstacleDataCreator(gridSetting));
+                new SimpleGridObstacleDataCreator(gridSetting));//todo creator is dependent on setting
             _squareGrid2d.CreateElements();
+        }
+
+        public class GridFactory : PlaceholderFactory<int, Vector3, Vector2, IGridElementMaker<ObstacleData>, SquareGrid2d<ObstacleData, SimpleGridObstacleDataCreator>>//first come dependencies to the creation, then the type of the creation
+        {
+        }
+
+        public class Factory : PlaceholderFactory<int, WallSegment>//int is index we are injecting on creation, can be passed in Contruct [Inject] method
+        {
         }
 
         private async void PlaceObstacles()

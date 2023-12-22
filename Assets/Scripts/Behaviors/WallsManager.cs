@@ -6,18 +6,26 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.Serialization;
 using Utilities.Grid;
+using Zenject;
 
 namespace Behaviors
 {
     public class WallsManager : MonoBehaviour
     {
+#region Zenject
+
+        [Inject]
+        private WallSegment.Factory _wallSegmentFactory;
+
+#endregion
+
         [SerializeField] private PlayerController _playerController;
         [SerializeField] private int _visibleUnitsNumber;
-        [SerializeField] private GameObject _wallCompositeTemplate;
+        [SerializeField] private GameObject _wallCompositeTemplate;//todo DELETE!!!
         [SerializeField] private AssetReferenceGameObject _wallCompositeAssetRef;
         [SerializeField] private SO_StateChannel _stateChannel;
         [FormerlySerializedAs("_gridObstacleSettings")] [SerializeField] private SO_GridObstacleSettings _SO_GridObstacleSettings;
-        [SerializeField] private SO_ObstacleElementAssetRefs _SO_ObstacleElementAssetRefs;
+        [SerializeField] private SO_ObstacleElementAssetRefs _SO_ObstacleElementAssetRefs;//todo add as dependency
 
         public UniTask LoadAllAssetsTask { get; private set; }
         private readonly List<AsyncOperationHandle<GameObject>> _wallCompositeHandles = new();
@@ -125,8 +133,11 @@ namespace Behaviors
                 }
                 
                 var spawned =
-                    Instantiate(_wallCompositeTemplate, _wallCompositePool.Count > 0 ? OffsetPosition(position) : position, Quaternion.identity,
+                    Instantiate(wallCompositeHandle.Result, _wallCompositePool.Count > 0 ? OffsetPosition(position) : position, Quaternion.identity,//todo here use factory
                         transform);
+
+                //var injectSpawn = _wallSegmentFactory.Create(i);//todo add additional parameters like offset etc. can be group with index as a config setting
+                
                 position = spawned.transform.position;
                 if (spawned.GetComponent<WallSegment>() is { } segment)
                 {

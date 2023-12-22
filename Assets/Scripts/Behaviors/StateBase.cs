@@ -6,7 +6,7 @@ namespace Behaviors
     public abstract class StateBase : IDisposable
     {
         protected readonly GameplayManager GameplayManager;
-        protected StateBase(GameplayManager gameplayManager)
+        protected StateBase(GameplayManager gameplayManager)//todo add as dependency
         {
             GameplayManager = gameplayManager;
         }

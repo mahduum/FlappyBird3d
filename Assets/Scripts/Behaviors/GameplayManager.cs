@@ -9,12 +9,12 @@ namespace Behaviors
 {
     public class GameplayManager : StateMachineBase
     {
-        [SerializeField] private SO_StateChannel _stateChannel;
+        [SerializeField] private SO_StateChannel _stateChannel;//todo DI
         [SerializeField] private SO_SegmentUpdateChannel _segmentUpdateChannel;
-        [SerializeField] private SO_SpeedThresholds _speedThresholds;
+        [SerializeField] private SO_SpeedThresholds _speedThresholds;//todo DI
         [SerializeField] private GameOverPanel _gameOver;
         [SerializeField] private GameObject _gamePaused;
-        [SerializeField] private WallsManager _wallsManager;
+        [SerializeField] private WallsManager _wallsManager;//todo add as DI
 
         public SO_StateChannel StateChannel => _stateChannel;
         public SO_SegmentUpdateChannel SegmentUpdateChannel => _segmentUpdateChannel;
